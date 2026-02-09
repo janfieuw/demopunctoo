@@ -146,6 +146,17 @@ function renderSignup({ error = "", email = "" } = {}) {
         name="password"
         placeholder="Wachtwoord"
         required
+        minlength="6"
+        autocomplete="new-password"
+        style="height:46px;border-radius:10px;border:2px solid #000;padding:0 14px;font-size:16px;"
+      />
+      <input
+        type="password"
+        name="password2"
+        placeholder="Herhaal wachtwoord"
+        required
+        minlength="6"
+        autocomplete="new-password"
         style="height:46px;border-radius:10px;border:2px solid #000;padding:0 14px;font-size:16px;"
       />
 
@@ -188,6 +199,7 @@ function renderLogin({ error = "", email = "" } = {}) {
         name="password"
         placeholder="Wachtwoord"
         required
+        autocomplete="current-password"
         style="height:46px;border-radius:10px;border:2px solid #000;padding:0 14px;font-size:16px;"
       />
 
@@ -206,7 +218,6 @@ function renderLogin({ error = "", email = "" } = {}) {
 
 // landing
 router.get("/demo/account", (req, res) => {
-  // session aanmaken zodat je wizard meteen werkt
   ensureDemoSession(req, res);
   res.type("html").send(renderLanding());
 });
@@ -219,18 +230,26 @@ router.get("/demo/signup", (req, res) => {
 
 router.post("/demo/signup", express.urlencoded({ extended: false }), async (req, res) => {
   try {
-    const sid = ensureDemoSession(req, res);
+    ensureDemoSession(req, res);
     const email = String(req.body.email || "").trim().toLowerCase();
     const password = String(req.body.password || "");
+    const password2 = String(req.body.password2 || "");
 
-    if (!email || !password) {
-      return res.status(400).type("html").send(renderSignup({ error: "Vul e-mail en wachtwoord in.", email }));
+    if (!email || !password || !password2) {
+      return res.status(400).type("html").send(renderSignup({ error: "Vul e-mail en beide wachtwoorden in.", email }));
     }
 
-    // demo_accounts: verwacht kolommen (email, password_salt, password_hash, created_at)
+    if (password !== password2) {
+      return res.status(400).type("html").send(renderSignup({ error: "Wachtwoorden komen niet overeen.", email }));
+    }
+
+    // (optioneel) minimum lengte check extra duidelijk
+    if (password.length < 6) {
+      return res.status(400).type("html").send(renderSignup({ error: "Wachtwoord moet minstens 6 tekens zijn.", email }));
+    }
+
     const { saltHex, hashHex } = hashPassword(password);
 
-    // Best-effort insert; als tabel niet bestaat krijg je duidelijke error in logs
     await db.run(
       `INSERT INTO demo_accounts (email, password_salt, password_hash, created_at)
        VALUES ($1,$2,$3, NOW())
@@ -240,13 +259,20 @@ router.post("/demo/signup", express.urlencoded({ extended: false }), async (req,
       [email, saltHex, hashHex]
     );
 
-    res.cookie(COOKIE_EMAIL, email, { httpOnly: false, sameSite: "lax", secure: true, maxAge: 1000 * 60 * 60 * 24 * 30 });
+    res.cookie(COOKIE_EMAIL, email, {
+      httpOnly: false,
+      sameSite: "lax",
+      secure: true,
+      maxAge: 1000 * 60 * 60 * 24 * 30,
+    });
 
-    // Start wizard flow
     return res.redirect("/wizard/company");
   } catch (err) {
     console.error("POST /demo/signup error:", err);
-    return res.status(500).type("html").send(renderSignup({ error: "Interne fout bij account aanmaken.", email: req.body.email || "" }));
+    return res
+      .status(500)
+      .type("html")
+      .send(renderSignup({ error: "Interne fout bij account aanmaken.", email: req.body.email || "" }));
   }
 });
 
@@ -283,9 +309,13 @@ router.post("/demo/login", express.urlencoded({ extended: false }), async (req, 
       return res.status(401).type("html").send(renderLogin({ error: "Fout wachtwoord.", email }));
     }
 
-    res.cookie(COOKIE_EMAIL, email, { httpOnly: false, sameSite: "lax", secure: true, maxAge: 1000 * 60 * 60 * 24 * 30 });
+    res.cookie(COOKIE_EMAIL, email, {
+      httpOnly: false,
+      sameSite: "lax",
+      secure: true,
+      maxAge: 1000 * 60 * 60 * 24 * 30,
+    });
 
-    // Naar rapporten (jouw bestaande route)
     return res.redirect("/reports");
   } catch (err) {
     console.error("POST /demo/login error:", err);
