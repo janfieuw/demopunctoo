@@ -4,15 +4,13 @@
 const express = require("express");
 const crypto = require("crypto");
 
-// Als je db helper bestaat zoals in wizard.js:
 const db = require("../db");
 
-// layoutDemo bestaat bij jou al (wizard gebruikt ../ui/layout)
 let layoutDemo = null;
 try {
   ({ layoutDemo } = require("../ui/layout"));
 } catch (e) {
-  layoutDemo = null; // fallback hieronder
+  layoutDemo = null;
 }
 
 const router = express.Router();
@@ -20,7 +18,7 @@ const router = express.Router();
 /* =========================
    Config
 ========================= */
-const LOGO_SRC = "/static/logo_punctoo_groot_opgeel.png"; // zorg dat dit bestand bestaat in src/static
+const LOGO_SRC = "/static/logo_punctoo_groot_opgeel.png"; // moet bestaan in src/static
 const COOKIE_SESSION = "demo_session";
 const COOKIE_EMAIL = "demo_email";
 
@@ -37,12 +35,10 @@ function escapeHtml(str) {
 }
 
 function renderPage(title, innerHtml) {
-  // Prefer jouw bestaande layoutDemo (met demo.css en achtergrond split)
   if (typeof layoutDemo === "function") {
     return layoutDemo(title, innerHtml);
   }
 
-  // Fallback minimal layout (als layoutDemo niet gevonden wordt)
   return `<!doctype html>
 <html lang="nl">
 <head>
@@ -69,24 +65,36 @@ function ensureDemoSession(req, res) {
       httpOnly: true,
       sameSite: "lax",
       secure: true,
-      maxAge: 1000 * 60 * 60 * 24 * 30, // 30d
+      maxAge: 1000 * 60 * 60 * 24 * 30,
     });
   }
   return sid;
 }
 
-function hashPassword(password, saltHex = null) {
-  const salt = saltHex ? Buffer.from(saltHex, "hex") : crypto.randomBytes(16);
-  const hash = crypto.scryptSync(String(password), salt, 64);
-  return {
-    saltHex: salt.toString("hex"),
-    hashHex: hash.toString("hex"),
-  };
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16);
+  const hashHex = crypto.scryptSync(String(password), salt, 64).toString("hex");
+  const saltHex = salt.toString("hex");
+  // alles in 1 veld:
+  return `${saltHex}:${hashHex}`;
 }
 
-function verifyPassword(password, saltHex, hashHex) {
-  const hash = crypto.scryptSync(String(password), Buffer.from(saltHex, "hex"), 64).toString("hex");
-  return crypto.timingSafeEqual(Buffer.from(hash, "hex"), Buffer.from(hashHex, "hex"));
+function verifyPassword(password, stored) {
+  const raw = String(stored || "");
+  const parts = raw.split(":");
+  if (parts.length !== 2) return false;
+
+  const [saltHex, hashHex] = parts;
+
+  const computedHex = crypto
+    .scryptSync(String(password), Buffer.from(saltHex, "hex"), 64)
+    .toString("hex");
+
+  try {
+    return crypto.timingSafeEqual(Buffer.from(computedHex, "hex"), Buffer.from(hashHex, "hex"));
+  } catch {
+    return false;
+  }
 }
 
 /* =========================
@@ -229,8 +237,9 @@ router.get("/demo/signup", (req, res) => {
 });
 
 router.post("/demo/signup", express.urlencoded({ extended: false }), async (req, res) => {
+  const sid = ensureDemoSession(req, res);
+
   try {
-    ensureDemoSession(req, res);
     const email = String(req.body.email || "").trim().toLowerCase();
     const password = String(req.body.password || "");
     const password2 = String(req.body.password2 || "");
@@ -243,20 +252,20 @@ router.post("/demo/signup", express.urlencoded({ extended: false }), async (req,
       return res.status(400).type("html").send(renderSignup({ error: "Wachtwoorden komen niet overeen.", email }));
     }
 
-    // (optioneel) minimum lengte check extra duidelijk
     if (password.length < 6) {
       return res.status(400).type("html").send(renderSignup({ error: "Wachtwoord moet minstens 6 tekens zijn.", email }));
     }
 
-    const { saltHex, hashHex } = hashPassword(password);
+    const passwordHash = hashPassword(password);
 
+    // ✅ past bij jouw huidige tabel: email, password_hash, demo_session_id, created_at
     await db.run(
-      `INSERT INTO demo_accounts (email, password_salt, password_hash, created_at)
-       VALUES ($1,$2,$3, NOW())
+      `INSERT INTO demo_accounts (email, password_hash, demo_session_id, created_at)
+       VALUES ($1, $2, $3, NOW())
        ON CONFLICT (email) DO UPDATE SET
-         password_salt = EXCLUDED.password_salt,
-         password_hash = EXCLUDED.password_hash`,
-      [email, saltHex, hashHex]
+         password_hash = EXCLUDED.password_hash,
+         demo_session_id = EXCLUDED.demo_session_id`,
+      [email, passwordHash, sid]
     );
 
     res.cookie(COOKIE_EMAIL, email, {
@@ -269,10 +278,12 @@ router.post("/demo/signup", express.urlencoded({ extended: false }), async (req,
     return res.redirect("/wizard/company");
   } catch (err) {
     console.error("POST /demo/signup error:", err);
-    return res
-      .status(500)
-      .type("html")
-      .send(renderSignup({ error: "Interne fout bij account aanmaken.", email: req.body.email || "" }));
+    return res.status(500).type("html").send(
+      renderSignup({
+        error: "Interne fout bij account aanmaken.",
+        email: req.body.email || "",
+      })
+    );
   }
 });
 
@@ -283,8 +294,9 @@ router.get("/demo/login", (req, res) => {
 });
 
 router.post("/demo/login", express.urlencoded({ extended: false }), async (req, res) => {
+  ensureDemoSession(req, res);
+
   try {
-    ensureDemoSession(req, res);
     const email = String(req.body.email || "").trim().toLowerCase();
     const password = String(req.body.password || "");
 
@@ -293,7 +305,7 @@ router.post("/demo/login", express.urlencoded({ extended: false }), async (req, 
     }
 
     const row = await db.get(
-      `SELECT email, password_salt, password_hash
+      `SELECT email, password_hash
        FROM demo_accounts
        WHERE email = $1
        LIMIT 1`,
@@ -304,7 +316,7 @@ router.post("/demo/login", express.urlencoded({ extended: false }), async (req, 
       return res.status(401).type("html").send(renderLogin({ error: "Account niet gevonden.", email }));
     }
 
-    const ok = verifyPassword(password, row.password_salt, row.password_hash);
+    const ok = verifyPassword(password, row.password_hash);
     if (!ok) {
       return res.status(401).type("html").send(renderLogin({ error: "Fout wachtwoord.", email }));
     }
