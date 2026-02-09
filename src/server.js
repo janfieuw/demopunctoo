@@ -1,18 +1,30 @@
-// src/server.js
-const app = require("./app");
-const { initDb } = require("./db/init");
-const { PORT, NODE_ENV } = require("./config");
+function start() {
+  const mod = require("./app");
 
-async function start() {
-  await initDb();
+  // Kan 3 vormen zijn:
+  // 1) function createApp()
+  // 2) { createApp: function }
+  // 3) express app object
+  let app;
+  if (typeof mod === "function") {
+    app = mod();
+  } else if (mod && typeof mod.createApp === "function") {
+    app = mod.createApp();
+  } else {
+    app = mod;
+  }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`PUNCTOO demo running (env=${NODE_ENV})`);
-    console.log(`Listening on 0.0.0.0:${PORT}`);
+  if (!app || typeof app.listen !== "function") {
+    throw new Error(
+      "Startup failed: app is not an Express instance (export mismatch in src/app.js)."
+    );
+  }
+
+  const port = process.env.PORT || 3000;
+
+  app.listen(port, () => {
+    console.log(`Server listening on port ${port}`);
   });
 }
 
-start().catch((err) => {
-  console.error("Startup failed:", err);
-  process.exit(1);
-});
+start();
