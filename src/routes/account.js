@@ -1,30 +1,15 @@
 // src/routes/account.js
-// CommonJS router for DEMO landing + signup + login
-
 const express = require("express");
 const crypto = require("crypto");
+const bcrypt = require("bcryptjs");
 
+// Verwacht: db helper(s) in ../db met run/get/all of iets gelijkaardigs.
+// Pas dit eventueel aan aan jouw db-wrapper.
 const db = require("../db");
 
-let layoutDemo = null;
-try {
-  ({ layoutDemo } = require("../ui/layout"));
-} catch (e) {
-  layoutDemo = null;
-}
-
-const router = express.Router();
-
-/* =========================
-   Config
-========================= */
-const LOGO_SRC = "/static/logo_punctoo_groot_opgeel.png"; // moet bestaan in src/static
-const COOKIE_SESSION = "demo_session";
-const COOKIE_EMAIL = "demo_email";
-
-/* =========================
-   Helpers
-========================= */
+// --------------------
+// Helpers
+// --------------------
 function escapeHtml(str) {
   return String(str || "")
     .replaceAll("&", "&amp;")
@@ -34,305 +19,288 @@ function escapeHtml(str) {
     .replaceAll("'", "&#039;");
 }
 
-function renderPage(title, innerHtml) {
-  if (typeof layoutDemo === "function") {
-    return layoutDemo(title, innerHtml);
-  }
-
+// Als jij al een layout helper hebt (renderWithDemoLayout), kan je dit vervangen.
+// Dit is bewust “klassiek” en self-contained.
+function renderDemoPage(title, innerHtml) {
   return `<!doctype html>
 <html lang="nl">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${escapeHtml(title)}</title>
   <link rel="stylesheet" href="/static/demo.css" />
 </head>
-<body style="margin:0;background:#fdc500;font-family:Arial,Helvetica,sans-serif;">
-  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;">
-    <div style="width:min(720px,100%);text-align:center;">
+<body>
+  <div class="demo-shell">
+    <div class="demo-left">
       ${innerHtml}
     </div>
+    <div class="demo-right"></div>
   </div>
 </body>
 </html>`;
 }
 
-function ensureDemoSession(req, res) {
-  let sid = String(req.cookies?.[COOKIE_SESSION] || "").trim();
-  if (!sid) {
-    sid = crypto.randomBytes(4).toString("hex"); // 8 chars
-    res.cookie(COOKIE_SESSION, sid, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: true,
-      maxAge: 1000 * 60 * 60 * 24 * 30,
-    });
-  }
-  return sid;
+function cookieOptions(req) {
+  // Railway draait https → secure cookie ok.
+  // Lokaal (http) moet secure false zijn.
+  const isHttps = req.secure || req.headers["x-forwarded-proto"] === "https";
+
+  return {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: isHttps,
+    path: "/", // ✅ CRUCIAAL: cookie zichtbaar voor /wizard/*
+    maxAge: 1000 * 60 * 60 * 24 * 30, // 30 dagen
+  };
 }
 
-function hashPassword(password) {
-  const salt = crypto.randomBytes(16);
-  const hashHex = crypto.scryptSync(String(password), salt, 64).toString("hex");
-  const saltHex = salt.toString("hex");
-  // alles in 1 veld:
-  return `${saltHex}:${hashHex}`;
+function newDemoSessionId() {
+  // 32 hex chars
+  return crypto.randomBytes(16).toString("hex");
 }
 
-function verifyPassword(password, stored) {
-  const raw = String(stored || "");
-  const parts = raw.split(":");
-  if (parts.length !== 2) return false;
-
-  const [saltHex, hashHex] = parts;
-
-  const computedHex = crypto
-    .scryptSync(String(password), Buffer.from(saltHex, "hex"), 64)
-    .toString("hex");
-
-  try {
-    return crypto.timingSafeEqual(Buffer.from(computedHex, "hex"), Buffer.from(hashHex, "hex"));
-  } catch {
-    return false;
-  }
+async function dbRun(sql, params) {
+  if (typeof db.run === "function") return db.run(sql, params);
+  // fallback: pg Pool interface
+  return db.query(sql, params);
 }
 
-/* =========================
-   Pages
-========================= */
-function renderLanding() {
-  return renderPage(
-    "DEMO – Start",
-    `
-<div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
-  <img src="${LOGO_SRC}" alt="Punctoo" style="width:260px;max-width:78vw;height:auto;margin-bottom:6px;" />
-  <div style="font-size:44px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;line-height:1;">
-    DEMO&nbsp;UITTESTEN<br/>IN&nbsp;5&nbsp;STAPPEN
-  </div>
-
-  <div style="max-width:760px;font-size:14px;line-height:1.5;margin-top:8px;">
-    <b>Deze demo toont hoe Punctoo werkt in de praktijk.</b><br/>
-    Je doorloopt de volledige flow: account → onderneming → werknemers → ScanTags/QR → smartphone koppelen.<br/>
-    <i>Beperkt tot 2 werknemers (demo).</i>
-  </div>
-
-  <div style="margin-top:10px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
-    <a href="/demo/signup" class="demo-btn primary">ACCOUNT AANMAKEN (start wizard)</a>
-    <a href="/demo/login" class="demo-btn ghost">REEDS ACCOUNT? LOGIN</a>
-  </div>
-</div>`
-  );
+async function dbGet(sql, params) {
+  if (typeof db.get === "function") return db.get(sql, params);
+  const r = await db.query(sql, params);
+  return r.rows?.[0] || null;
 }
 
-function renderSignup({ error = "", email = "" } = {}) {
-  const err = error
-    ? `<div class="demo-alert" role="alert" style="margin-bottom:12px;">${escapeHtml(error)}</div>`
-    : "";
+// --------------------
+// Router
+// --------------------
+const router = express.Router();
 
-  return renderPage(
-    "DEMO – Account aanmaken",
-    `
-<div style="display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;">
-  <img src="${LOGO_SRC}" alt="Punctoo" style="width:260px;max-width:78vw;height:auto;margin-bottom:6px;" />
-
-  ${err}
-
-  <div style="font-size:14px;letter-spacing:.08em;text-transform:uppercase;">Account aanmaken</div>
-
-  <form method="post" action="/demo/signup" style="width:min(520px,92vw);margin-top:2px;">
-    <div style="display:flex;flex-direction:column;gap:10px;">
-      <input
-        type="email"
-        name="email"
-        placeholder="E-mail"
-        value="${escapeHtml(email)}"
-        required
-        style="height:46px;border-radius:10px;border:2px solid #000;padding:0 14px;font-size:16px;"
-      />
-      <input
-        type="password"
-        name="password"
-        placeholder="Wachtwoord"
-        required
-        minlength="6"
-        autocomplete="new-password"
-        style="height:46px;border-radius:10px;border:2px solid #000;padding:0 14px;font-size:16px;"
-      />
-      <input
-        type="password"
-        name="password2"
-        placeholder="Herhaal wachtwoord"
-        required
-        minlength="6"
-        autocomplete="new-password"
-        style="height:46px;border-radius:10px;border:2px solid #000;padding:0 14px;font-size:16px;"
-      />
-
-      <button type="submit" class="demo-btn primary" style="height:46px;">VOLGENDE</button>
-
-      <a href="/demo/account" class="demo-link">Terug</a>
-    </div>
-  </form>
-</div>`
-  );
-}
-
-function renderLogin({ error = "", email = "" } = {}) {
-  const err = error
-    ? `<div class="demo-alert" role="alert" style="margin-bottom:12px;">${escapeHtml(error)}</div>`
-    : "";
-
-  return renderPage(
-    "DEMO – Login",
-    `
-<div style="display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;">
-  <img src="${LOGO_SRC}" alt="Punctoo" style="width:260px;max-width:78vw;height:auto;margin-bottom:6px;" />
-
-  ${err}
-
-  <div style="font-size:14px;letter-spacing:.08em;text-transform:uppercase;">Login (rapporten bekijken)</div>
-
-  <form method="post" action="/demo/login" style="width:min(520px,92vw);margin-top:2px;">
-    <div style="display:flex;flex-direction:column;gap:10px;">
-      <input
-        type="email"
-        name="email"
-        placeholder="E-mail"
-        value="${escapeHtml(email)}"
-        required
-        style="height:46px;border-radius:10px;border:2px solid #000;padding:0 14px;font-size:16px;"
-      />
-      <input
-        type="password"
-        name="password"
-        placeholder="Wachtwoord"
-        required
-        autocomplete="current-password"
-        style="height:46px;border-radius:10px;border:2px solid #000;padding:0 14px;font-size:16px;"
-      />
-
-      <button type="submit" class="demo-btn primary" style="height:46px;">LOGIN</button>
-
-      <a href="/demo/account" class="demo-link">Terug</a>
-    </div>
-  </form>
-</div>`
-  );
-}
-
-/* =========================
-   Routes
-========================= */
-
-// landing
+// LANDING: /demo/account
 router.get("/demo/account", (req, res) => {
-  ensureDemoSession(req, res);
-  res.type("html").send(renderLanding());
+  const html = renderDemoPage(
+    "DEMO",
+    `
+    <div class="demo-block">
+      <img
+        src="/static/logo_punctoo_groot_opgeel.png"
+        alt="MyPunctoo"
+        style="width:260px; height:auto; margin-bottom:18px;"
+      />
+
+      <div class="demo-title">DEMO UITTTESTEN<br/>IN 5 STAPPEN</div>
+
+      <p class="demo-lead">
+        <b>Deze demo toont hoe Punctoo werkt in de praktijk.</b><br/>
+        Je doorloopt de volledige flow: account → onderneming → werknemers → ScanTags/QR → smartphone koppelen.<br/>
+        <i>Beperkt tot 2 werknemers (demo).</i>
+      </p>
+
+      <div class="demo-actions" style="display:flex; gap:12px; flex-wrap:wrap;">
+        <a class="demo-btn primary" href="/demo/signup">ACCOUNT AANMAKEN (START WIZARD)</a>
+        <a class="demo-btn ghost" href="/demo/login">REEDS ACCOUNT? LOGIN</a>
+      </div>
+    </div>
+  `
+  );
+  res.status(200).send(html);
 });
 
-// signup
+// SIGNUP FORM
 router.get("/demo/signup", (req, res) => {
-  ensureDemoSession(req, res);
-  res.type("html").send(renderSignup({ email: req.cookies?.[COOKIE_EMAIL] || "" }));
+  const error = String(req.query.error || "");
+  const email = String(req.query.email || "");
+
+  const html = renderDemoPage(
+    "DEMO - SIGNUP",
+    `
+    <div class="demo-block" style="text-align:center;">
+      <img
+        src="/static/logo_punctoo_groot_opgeel.png"
+        alt="MyPunctoo"
+        style="width:260px; height:auto; margin-bottom:18px;"
+      />
+
+      ${error ? `<div class="demo-alert" role="alert">${escapeHtml(error)}</div>` : ""}
+
+      <div class="demo-subtitle">ACCOUNT AANMAKEN</div>
+
+      <form method="POST" action="/demo/signup" style="max-width:520px; margin:0 auto;">
+        <input
+          class="demo-input"
+          type="email"
+          name="email"
+          placeholder="E-mail"
+          value="${escapeHtml(email)}"
+          required
+          autocomplete="email"
+        />
+
+        <input
+          class="demo-input"
+          type="password"
+          name="password"
+          placeholder="Wachtwoord"
+          required
+          autocomplete="new-password"
+          minlength="6"
+        />
+
+        <input
+          class="demo-input"
+          type="password"
+          name="password2"
+          placeholder="Herhaal wachtwoord"
+          required
+          autocomplete="new-password"
+          minlength="6"
+        />
+
+        <button class="demo-btn primary" type="submit" style="width:100%;">VOLGENDE</button>
+      </form>
+
+      <div style="margin-top:10px;">
+        <a class="demo-link" href="/demo/account">Terug</a>
+      </div>
+    </div>
+  `
+  );
+
+  res.status(200).send(html);
 });
 
+// SIGNUP POST
 router.post("/demo/signup", express.urlencoded({ extended: false }), async (req, res) => {
-  const sid = ensureDemoSession(req, res);
-
   try {
     const email = String(req.body.email || "").trim().toLowerCase();
     const password = String(req.body.password || "");
     const password2 = String(req.body.password2 || "");
 
-    if (!email || !password || !password2) {
-      return res.status(400).type("html").send(renderSignup({ error: "Vul e-mail en beide wachtwoorden in.", email }));
+    if (!email) return res.redirect(`/demo/signup?error=${encodeURIComponent("E-mail is verplicht.")}`);
+    if (password.length < 6)
+      return res.redirect(`/demo/signup?email=${encodeURIComponent(email)}&error=${encodeURIComponent("Wachtwoord is te kort (min. 6).")}`);
+    if (password !== password2)
+      return res.redirect(`/demo/signup?email=${encodeURIComponent(email)}&error=${encodeURIComponent("Wachtwoorden komen niet overeen.")}`);
+
+    // Bestaat al?
+    const existing = await dbGet(`SELECT id FROM demo_accounts WHERE email = $1`, [email]);
+    if (existing) {
+      return res.redirect(`/demo/signup?email=${encodeURIComponent(email)}&error=${encodeURIComponent("E-mail bestaat al. Gebruik login.")}`);
     }
 
-    if (password !== password2) {
-      return res.status(400).type("html").send(renderSignup({ error: "Wachtwoorden komen niet overeen.", email }));
-    }
+    const demoSessionId = newDemoSessionId();
+    const passwordHash = await bcrypt.hash(password, 10);
 
-    if (password.length < 6) {
-      return res.status(400).type("html").send(renderSignup({ error: "Wachtwoord moet minstens 6 tekens zijn.", email }));
-    }
-
-    const passwordHash = hashPassword(password);
-
-    // ✅ past bij jouw huidige tabel: email, password_hash, demo_session_id, created_at
-    await db.run(
-      `INSERT INTO demo_accounts (email, password_hash, demo_session_id, created_at)
-       VALUES ($1, $2, $3, NOW())
-       ON CONFLICT (email) DO UPDATE SET
-         password_hash = EXCLUDED.password_hash,
-         demo_session_id = EXCLUDED.demo_session_id`,
-      [email, passwordHash, sid]
+    await dbRun(
+      `INSERT INTO demo_accounts (email, password_hash, demo_session_id)
+       VALUES ($1, $2, $3)`,
+      [email, passwordHash, demoSessionId]
     );
 
-    res.cookie(COOKIE_EMAIL, email, {
-      httpOnly: false,
-      sameSite: "lax",
-      secure: true,
-      maxAge: 1000 * 60 * 60 * 24 * 30,
-    });
+    // ✅ CRUCIAAL: path "/"
+    res.cookie("demo_session", demoSessionId, cookieOptions(req));
+    res.cookie("demo_email", email, { ...cookieOptions(req), httpOnly: false }); // optioneel
 
+    // Door naar wizard stap "bedrijf"
     return res.redirect("/wizard/company");
   } catch (err) {
-    console.error("POST /demo/signup error:", err);
-    return res.status(500).type("html").send(
-      renderSignup({
-        error: "Interne fout bij account aanmaken.",
-        email: req.body.email || "",
-      })
-    );
+    console.error("Signup error:", err);
+    return res.redirect(`/demo/signup?error=${encodeURIComponent("Interne fout bij account aanmaken.")}`);
   }
 });
 
-// login
+// LOGIN FORM
 router.get("/demo/login", (req, res) => {
-  ensureDemoSession(req, res);
-  res.type("html").send(renderLogin({ email: req.cookies?.[COOKIE_EMAIL] || "" }));
+  const error = String(req.query.error || "");
+  const email = String(req.query.email || "");
+
+  const html = renderDemoPage(
+    "DEMO - LOGIN",
+    `
+    <div class="demo-block" style="text-align:center;">
+      <img
+        src="/static/logo_punctoo_groot_opgeel.png"
+        alt="MyPunctoo"
+        style="width:260px; height:auto; margin-bottom:18px;"
+      />
+
+      ${error ? `<div class="demo-alert" role="alert">${escapeHtml(error)}</div>` : ""}
+
+      <div class="demo-subtitle">LOGIN (rapporten bekijken)</div>
+
+      <form method="POST" action="/demo/login" style="max-width:520px; margin:0 auto;">
+        <input
+          class="demo-input"
+          type="email"
+          name="email"
+          placeholder="E-mail"
+          value="${escapeHtml(email)}"
+          required
+          autocomplete="email"
+        />
+
+        <input
+          class="demo-input"
+          type="password"
+          name="password"
+          placeholder="Wachtwoord"
+          required
+          autocomplete="current-password"
+        />
+
+        <button class="demo-btn primary" type="submit" style="width:100%;">LOGIN</button>
+      </form>
+
+      <div style="margin-top:10px;">
+        <a class="demo-link" href="/demo/account">Terug</a>
+      </div>
+    </div>
+  `
+  );
+
+  res.status(200).send(html);
 });
 
+// LOGIN POST
 router.post("/demo/login", express.urlencoded({ extended: false }), async (req, res) => {
-  ensureDemoSession(req, res);
-
   try {
     const email = String(req.body.email || "").trim().toLowerCase();
     const password = String(req.body.password || "");
 
-    if (!email || !password) {
-      return res.status(400).type("html").send(renderLogin({ error: "Vul e-mail en wachtwoord in.", email }));
-    }
-
-    const row = await db.get(
-      `SELECT email, password_hash
+    const row = await dbGet(
+      `SELECT id, email, password_hash, demo_session_id
        FROM demo_accounts
-       WHERE email = $1
-       LIMIT 1`,
+       WHERE email = $1`,
       [email]
     );
 
     if (!row) {
-      return res.status(401).type("html").send(renderLogin({ error: "Account niet gevonden.", email }));
+      return res.redirect(`/demo/login?email=${encodeURIComponent(email)}&error=${encodeURIComponent("Onbekende login.")}`);
     }
 
-    const ok = verifyPassword(password, row.password_hash);
+    const ok = await bcrypt.compare(password, row.password_hash);
     if (!ok) {
-      return res.status(401).type("html").send(renderLogin({ error: "Fout wachtwoord.", email }));
+      return res.redirect(`/demo/login?email=${encodeURIComponent(email)}&error=${encodeURIComponent("Fout wachtwoord.")}`);
     }
 
-    res.cookie(COOKIE_EMAIL, email, {
-      httpOnly: false,
-      sameSite: "lax",
-      secure: true,
-      maxAge: 1000 * 60 * 60 * 24 * 30,
-    });
+    // ✅ CRUCIAAL: path "/"
+    res.cookie("demo_session", row.demo_session_id, cookieOptions(req));
+    res.cookie("demo_email", row.email, { ...cookieOptions(req), httpOnly: false }); // optioneel
 
+    // Hier ga jij naar jouw rapportpagina (pas aan naar jouw echte route)
     return res.redirect("/reports");
   } catch (err) {
-    console.error("POST /demo/login error:", err);
-    return res.status(500).type("html").send(renderLogin({ error: "Interne fout bij login.", email: req.body.email || "" }));
+    console.error("Login error:", err);
+    return res.redirect(`/demo/login?error=${encodeURIComponent("Interne fout bij login.")}`);
   }
+});
+
+// LOGOUT
+router.get("/demo/logout", (req, res) => {
+  res.clearCookie("demo_session", { path: "/" });
+  res.clearCookie("demo_email", { path: "/" });
+  return res.redirect("/demo/account");
 });
 
 module.exports = router;
