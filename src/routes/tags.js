@@ -1,9 +1,12 @@
+// src/routes/tags.js
 const express = require("express");
+const { DateTime } = require("luxon");
 const QRCode = require("qrcode");
 const { get, all } = require("../db");
 const { layoutDemo, escapeHtml } = require("../ui/layout");
 
 const router = express.Router();
+const TZ = "Europe/Brussels";
 
 function getDemoSession(req) {
   return String(req.cookies?.demo_session || "").trim();
@@ -66,10 +69,12 @@ router.get("/tags", async (req, res) => {
 
   const employees = await getEmployees(company.id);
 
+  // ✅ per ScanTag IN/OUT
   const baseUrl = getBaseUrl(req);
   const inUrl = `${baseUrl}/t/${tag.id}/in`;
   const outUrl = `${baseUrl}/t/${tag.id}/out`;
 
+  // QR’s als dataURL (worden als <img> bovenop template geplaatst)
   const qrOpts = { margin: 1, width: 600 };
   const inQrDataUrl = await QRCode.toDataURL(inUrl, qrOpts);
   const outQrDataUrl = await QRCode.toDataURL(outUrl, qrOpts);
@@ -89,34 +94,108 @@ router.get("/tags", async (req, res) => {
           )
           .join("");
 
+  // Template afmetingen (jouw file is 1772x1182)
+  // QR vakken (pixel coords in template):
+  // Left:  x=258 y=390 w=383 h=383
+  // Right: x=1120 y=390 w=383 h=383
+  //
+  // We plaatsen QR’s via percentages zodat het mee schaalt met de template.
+  const TEMPLATE_W = 1772;
+  const TEMPLATE_H = 1182;
+
+  const leftBox = { x: 258, y: 390, w: 383, h: 383 };
+  const rightBox = { x: 1120, y: 390, w: 383, h: 383 };
+
+  function pctX(px) {
+    return (px / TEMPLATE_W) * 100;
+  }
+  function pctY(px) {
+    return (px / TEMPLATE_H) * 100;
+  }
+
+  // padding binnen het witte vak (in template pixels)
+  const PAD = 16;
+
+  const inStyle = `
+    left:${pctX(leftBox.x + PAD)}%;
+    top:${pctY(leftBox.y + PAD)}%;
+    width:${pctX(leftBox.w - 2 * PAD)}%;
+    height:${pctY(leftBox.h - 2 * PAD)}%;
+  `;
+
+  const outStyle = `
+    left:${pctX(rightBox.x + PAD)}%;
+    top:${pctY(rightBox.y + PAD)}%;
+    width:${pctX(rightBox.w - 2 * PAD)}%;
+    height:${pctY(rightBox.h - 2 * PAD)}%;
+  `;
+
   return res.send(
     layoutDemo(
-      "DEMO — STAP 5/5",
+      "PUNCTOO — SCANTAG",
       `
-        <div class="demo-kicker">DEMO UITTESTEN <br> IN 5 STAPPEN</div>
-
-        <h1 class="demo-title">STAP 5/5: SMARTPHONE KOPPELEN</h1>
+        <div class="demo-kicker">JOUW SCANTAG.</div>
+      
 
         <p class="demo-lead">
-          De ScanTag is klaar voor gebruik.<br>
-          Gebruik de QR-codes hieronder om te scannen met een smartphone.
+         
         </p>
 
-        <!-- TEMPLATE + QR -->
-        <div style="margin-top:16px;">
-          <img src="/static/scantag-template.png"
-               alt="ScanTag"
-               style="width:100%; max-width:700px; display:block;" />
+       
 
-          <img src="${inQrDataUrl}" style="display:none;" />
-          <img src="${outQrDataUrl}" style="display:none;" />
+        <div class="demo-actions" style="margin-top:12px;">
+          <a class="demo-btn ghost" href="/wizard/reference">TERUG</a>
+          <a class="demo-btn primary" href="/reports">RAPPORTEN</a>
+          <a class="demo-btn secondary" href="/scantag/${tag.id}.pdf">DOWNLOAD PDF</a>
         </div>
 
-        <h2 class="demo-title" style="margin-top:24px;">
-          Activatiecodes (eerste scan)
-        </h2>
+        <!-- ✅ TEMPLATE + QR overlay -->
+        <div style="margin-top:16px;">
+          <div style="
+            position: relative;
+            width: 100%;
+            max-width: 704px; /* 760px kolom - padding */
+            aspect-ratio: ${TEMPLATE_W} / ${TEMPLATE_H};
+          ">
+            <img
+              src="/static/scantag-template.png"
+              alt="ScanTag template"
+              style="
+                position:absolute; inset:0;
+                width:100%; height:100%;
+                object-fit:contain;
+                display:block;
+              "
+            />
 
-        <div class="demo-tablewrap">
+            <img
+              src="${inQrDataUrl}"
+              alt="IN QR"
+              style="
+                position:absolute;
+                ${inStyle}
+                object-fit:contain;
+              "
+            />
+
+            <img
+              src="${outQrDataUrl}"
+              alt="OUT QR"
+              style="
+                position:absolute;
+                ${outStyle}
+                object-fit:contain;
+              "
+            />
+          </div>
+        </div>
+
+        <p class="demo-muted" style="margin-top:18px;">
+        <h1 class="demo-title">Stap 5: SMARTPHONE KOPPELEN.</h1>
+          <b>Gebruik onderstaande codes bij de eerste scan-IN.</b>
+        </p>
+
+        <div class="demo-tablewrap" style="margin-top:10px;">
           <table class="demo-table">
             <thead>
               <tr>
@@ -128,17 +207,6 @@ router.get("/tags", async (req, res) => {
             <tbody>${empRows}</tbody>
           </table>
         </div>
-
-        <div class="demo-actions" style="margin-top:24px;">
-          <a class="demo-btn primary" href="/demo/login">
-            GA NAAR LOGIN (RAPPORTEN)
-          </a>
-        </div>
-
-        <p class="demo-muted" style="margin-top:14px;">
-          De demo-configuratie is afgerond.<br>
-          Aanpassingen zijn niet meer mogelijk in deze demo.
-        </p>
       `
     )
   );

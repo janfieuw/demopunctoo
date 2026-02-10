@@ -1,81 +1,51 @@
+// src/app.js
 const express = require("express");
+const cookieParser = require("cookie-parser");
 const path = require("path");
 
-/**
- * Express app.use() accepteert alleen middleware functions (Router is ook function).
- * Sommige files exporteren per ongeluk { router } of { default: router } of { createRouter }.
- * Deze helper maakt dat robuust én geeft een super duidelijke error als het fout zit.
- */
-function normalizeMiddleware(mod, name) {
-  let mw = mod;
+// Routers
+const accountRouter = require("./routes/account");
+const wizardRouter = require("./routes/wizard");
+const adminRouter = require("./routes/admin");
+const reportsRouter = require("./routes/reports");
+const scanRouter = require("./routes/scan");
+const tagsRouter = require("./routes/tags");
 
-  // Common patterns
-  if (mw && typeof mw === "object") {
-    if (typeof mw.default === "function") mw = mw.default;
-    else if (typeof mw.router === "function") mw = mw.router;
-    else if (typeof mw.createRouter === "function") mw = mw.createRouter();
-    else if (typeof mw.createApp === "function") mw = mw.createApp(); // just in case
-  }
-
-  if (typeof mw !== "function") {
-    const exportedKeys =
-      mod && typeof mod === "object" ? Object.keys(mod) : [];
-    throw new Error(
-      `[app.js] Route "${name}" is not a middleware function.\n` +
-        `Expected: module.exports = router (express.Router())\n` +
-        `Got type: ${typeof mw}\n` +
-        `Original export type: ${typeof mod}\n` +
-        `Exported keys: ${exportedKeys.join(", ") || "(none)"}\n\n` +
-        `Fix in src/routes/${name}.js: at bottom do -> module.exports = router;`
-    );
-  }
-
-  return mw;
-}
+// ScanTag flow + PDF
+const deviceRouter = require("./routes/device");
+const pairRouter = require("./routes/pair");
+const scantagPdfRouter = require("./routes/scantagPdf");
 
 function createApp() {
   const app = express();
 
-  // Body parsing
-  app.use(express.urlencoded({ extended: true }));
-  app.use(express.json());
+  app.set("trust proxy", 1);
 
-  // Static assets
-  // - src/styles -> /static  (css + images die je daar zet)
-  // - src/static -> /static  (assets)
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: false }));
+  app.use(cookieParser());
+
+  // ✅ Static files
+  // 1) src/styles → /static
   app.use("/static", express.static(path.join(__dirname, "styles")));
+  // 2) src/static → /static  (logo’s, png’s, extra assets)
   app.use("/static", express.static(path.join(__dirname, "static")));
 
-  // Home
   app.get("/", (req, res) => res.redirect("/demo/account"));
 
-  // ---- Routes (met harde checks) ----
-  const account = normalizeMiddleware(require("./routes/account"), "account");
-  const wizard = normalizeMiddleware(require("./routes/wizard"), "wizard");
-  const admin = normalizeMiddleware(require("./routes/admin"), "admin");
-  const reports = normalizeMiddleware(require("./routes/reports"), "reports");
-  const scan = normalizeMiddleware(require("./routes/scan"), "scan");
-  const tags = normalizeMiddleware(require("./routes/tags"), "tags");
-  const device = normalizeMiddleware(require("./routes/device"), "device");
-  const pair = normalizeMiddleware(require("./routes/pair"), "pair");
-  const scantagPdf = normalizeMiddleware(require("./routes/scantagPdf"), "scantagPdf");
+  app.use(accountRouter);
+  app.use(wizardRouter);
+  app.use(adminRouter);
+  app.use(reportsRouter);
+  app.use(scanRouter);
+  app.use(tagsRouter);
 
-  app.use(account);
-  app.use(wizard);
-  app.use(admin);
-  app.use(reports);
-  app.use(scan);
-  app.use(tags);
-  app.use(device);
-  app.use(pair);
-  app.use(scantagPdf);
+  app.use(deviceRouter);
+  app.use(pairRouter);
+  app.use(scantagPdfRouter);
 
-  // 404
-  app.use((req, res) => {
-    res.status(404).send("Not found");
-  });
+  app.use((req, res) => res.status(404).send("Not found"));
 
-  // Error handler
   // eslint-disable-next-line no-unused-vars
   app.use((err, req, res, next) => {
     console.error("UNHANDLED ERROR:", err);
@@ -85,6 +55,4 @@ function createApp() {
   return app;
 }
 
-// Exports (robust)
-module.exports = createApp;
-module.exports.createApp = createApp;
+module.exports = { createApp };
