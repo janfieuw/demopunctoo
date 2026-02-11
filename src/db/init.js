@@ -1,6 +1,7 @@
 const { run } = require("./index");
 
 async function initDb() {
+  // ✅ companies: demo_session_id + wizard_completed
   await run(`
     CREATE TABLE IF NOT EXISTS companies (
       id SERIAL PRIMARY KEY,
@@ -8,11 +9,33 @@ async function initDb() {
     );
   `);
 
-  // Basistabel employees (nieuw model)
+  await run(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS demo_session_id TEXT;`);
+  await run(`ALTER TABLE companies ADD COLUMN IF NOT EXISTS wizard_completed BOOLEAN NOT NULL DEFAULT FALSE;`);
+
+  await run(`
+    CREATE UNIQUE INDEX IF NOT EXISTS companies_demo_session_id_uq
+    ON companies(demo_session_id)
+    WHERE demo_session_id IS NOT NULL;
+  `);
+
+  // ✅ demo accounts (login/signup)
+  await run(`
+    CREATE TABLE IF NOT EXISTS demo_accounts (
+      id SERIAL PRIMARY KEY,
+      email TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      demo_session_id TEXT NOT NULL UNIQUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  // ✅ employees (met first_name/last_name)
   await run(`
     CREATE TABLE IF NOT EXISTS employees (
       id SERIAL PRIMARY KEY,
       company_id INT NOT NULL REFERENCES companies(id),
+      first_name TEXT,
+      last_name TEXT,
       display_name TEXT,
       scan_code TEXT,
       reference_mode TEXT
@@ -20,13 +43,13 @@ async function initDb() {
   `);
 
   // Migratie-light: als de tabel al bestond met oude kolommen, zorgen we dat nieuwe kolommen bestaan.
+  await run(`ALTER TABLE employees ADD COLUMN IF NOT EXISTS first_name TEXT;`);
+  await run(`ALTER TABLE employees ADD COLUMN IF NOT EXISTS last_name TEXT;`);
   await run(`ALTER TABLE employees ADD COLUMN IF NOT EXISTS display_name TEXT;`);
   await run(`ALTER TABLE employees ADD COLUMN IF NOT EXISTS scan_code TEXT;`);
   await run(`ALTER TABLE employees ADD COLUMN IF NOT EXISTS reference_mode TEXT;`);
-  await run(`ALTER TABLE employees ADD COLUMN IF NOT EXISTS reference_mode TEXT;`);
 
   // Als je vroeger "code" had, kopieer dat naar scan_code (zodat oude rows niet crashen).
-  // (Als kolom 'code' niet bestaat, faalt dit; daarom doen we dit met een DO-block.)
   await run(`
     DO $$
     BEGIN
@@ -47,7 +70,7 @@ async function initDb() {
     WHERE scan_code IS NOT NULL;
   `);
 
-  // Referentietijd: ROOSTER (weekday->minutes) of KALENDER (date->minutes)
+  // Referentietijd: ROOSTER (weekday->minutes)
   await run(`
     CREATE TABLE IF NOT EXISTS employee_reference_pattern (
       id SERIAL PRIMARY KEY,
@@ -62,6 +85,7 @@ async function initDb() {
     ON employee_reference_pattern(employee_id, weekday);
   `);
 
+  // Referentietijd: KALENDER (date->minutes)
   await run(`
     CREATE TABLE IF NOT EXISTS employee_reference_calendar (
       id SERIAL PRIMARY KEY,
@@ -76,6 +100,7 @@ async function initDb() {
     ON employee_reference_calendar(employee_id, day);
   `);
 
+  // ScanTags
   await run(`
     CREATE TABLE IF NOT EXISTS scantags (
       id SERIAL PRIMARY KEY,
@@ -84,6 +109,7 @@ async function initDb() {
     );
   `);
 
+  // Device bindings
   await run(`
     CREATE TABLE IF NOT EXISTS device_bindings (
       id SERIAL PRIMARY KEY,
@@ -94,6 +120,7 @@ async function initDb() {
     );
   `);
 
+  // Scan events
   await run(`
     CREATE TABLE IF NOT EXISTS scan_events (
       id SERIAL PRIMARY KEY,
@@ -108,34 +135,34 @@ async function initDb() {
   await run(`CREATE INDEX IF NOT EXISTS idx_device_bindings_token ON device_bindings(token);`);
   await run(`CREATE INDEX IF NOT EXISTS idx_scan_events_employee ON scan_events(employee_id);`);
 
-  // Referentietijd (ROOSTER / KALENDER)
+  // ✅ reports + report_rows (worden gebruikt in reports.js)
   await run(`
-    CREATE TABLE IF NOT EXISTS employee_reference_pattern (
+    CREATE TABLE IF NOT EXISTS reports (
       id SERIAL PRIMARY KEY,
-      employee_id INT NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
-      weekday INT NOT NULL CHECK (weekday BETWEEN 1 AND 7),
-      expected_minutes INT NOT NULL CHECK (expected_minutes >= 0)
+      filter_employee_id INT NULL,
+      filter_from DATE NOT NULL,
+      filter_to DATE NOT NULL,
+      meta JSONB NOT NULL DEFAULT '{}'::jsonb,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
 
   await run(`
-    CREATE UNIQUE INDEX IF NOT EXISTS employee_reference_pattern_uq
-    ON employee_reference_pattern(employee_id, weekday);
-  `);
-
-  await run(`
-    CREATE TABLE IF NOT EXISTS employee_reference_calendar (
+    CREATE TABLE IF NOT EXISTS report_rows (
       id SERIAL PRIMARY KEY,
+      report_id INT NOT NULL REFERENCES reports(id) ON DELETE CASCADE,
       employee_id INT NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
       day DATE NOT NULL,
-      expected_minutes INT NOT NULL CHECK (expected_minutes >= 0)
+      start_ts TIMESTAMPTZ NULL,
+      end_ts TIMESTAMPTZ NULL,
+      minutes INT NULL,
+      status TEXT NOT NULL,
+      message TEXT NOT NULL,
+      meta JSONB NOT NULL DEFAULT '{}'::jsonb
     );
   `);
 
-  await run(`
-    CREATE UNIQUE INDEX IF NOT EXISTS employee_reference_calendar_uq
-    ON employee_reference_calendar(employee_id, day);
-  `);
+  await run(`CREATE INDEX IF NOT EXISTS idx_report_rows_report_id ON report_rows(report_id);`);
 }
 
 module.exports = { initDb };

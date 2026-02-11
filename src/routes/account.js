@@ -81,6 +81,18 @@ function setDemoCookies(res, demoSessionId) {
   res.cookie("demo_session", demoSessionId, cookieOpts());
 }
 
+async function getCompanyBySessionId(demoSessionId) {
+  if (!demoSessionId) return null;
+  return await get(
+    `SELECT id, name, wizard_completed
+     FROM companies
+     WHERE demo_session_id=$1
+     ORDER BY id
+     LIMIT 1`,
+    [demoSessionId]
+  );
+}
+
 /* =========================
    Views
    ========================= */
@@ -94,7 +106,7 @@ function renderLogin({ error = "", email = "" } = {}) {
     "DEMO — LOGIN",
     `
       <div class="demo-kicker">DEMO UITTESTEN <br> IN 5 STAPPEN</div>
-      <div class="demo-title">Stap 1: ACCOUNT AANMAKEN.</div>
+      <div class="demo-title">LOGIN.</div>
 
       <p class="demo-lead">
         Login: vul je e-mailadres en paswoord in.<br />
@@ -114,12 +126,12 @@ function renderLogin({ error = "", email = "" } = {}) {
         <input class="demo-input" name="password" type="password" required />
 
         <div class="demo-actions" style="display:flex; gap:10px;">
-          <button class="demo-btn primary" type="submit">VOLGENDE</button>
+          <button class="demo-btn primary" type="submit">LOGIN</button>
           <a class="demo-btn ghost" href="/demo/logout">UITLOGGEN</a>
         </div>
       </form>
     `,
-    { width: 850 } // je vroeg om vaste breedte op deze pagina’s? pas aan indien gewenst
+    { width: 850 }
   );
 }
 
@@ -160,7 +172,7 @@ function renderSignup({ error = "", email = "" } = {}) {
         </div>
       </form>
     `,
-    { width: 850 } // idem
+    { width: 850 }
   );
 }
 
@@ -208,6 +220,10 @@ router.post("/demo/login", async (req, res) => {
   }
 
   setDemoCookies(res, existing.demo_session_id);
+
+  // ✅ Na login: als wizard al klaar is → rapporten; anders → wizard
+  const company = await getCompanyBySessionId(existing.demo_session_id);
+  if (company && company.wizard_completed) return res.redirect("/reports");
   return res.redirect("/wizard/company");
 });
 
@@ -247,6 +263,8 @@ router.post("/demo/signup", async (req, res) => {
   );
 
   setDemoCookies(res, demoSessionId);
+
+  // ✅ Signup start altijd wizard
   return res.redirect("/wizard/company");
 });
 

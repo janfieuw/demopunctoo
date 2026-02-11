@@ -21,9 +21,15 @@ async function getCompany(req) {
   if (!sid) return null;
 
   return await get(
-    `SELECT id, name FROM companies WHERE demo_session_id=$1 ORDER BY id LIMIT 1`,
+    `SELECT id, name, wizard_completed FROM companies WHERE demo_session_id=$1 ORDER BY id LIMIT 1`,
     [sid]
   );
+}
+
+function requireCompanyOrLogin(company) {
+  if (!company) return "/demo/login";
+  if (!company.wizard_completed) return "/wizard/company";
+  return null;
 }
 
 function formatEmployeeLabel(e) {
@@ -66,14 +72,8 @@ async function getEmployeesForReport(companyId, employeeId) {
 }
 
 function toRangeUTC(fromISO, toISO) {
-  const fromTs = DateTime.fromISO(fromISO, { zone: TZ })
-    .startOf("day")
-    .toUTC()
-    .toISO();
-  const toTs = DateTime.fromISO(toISO, { zone: TZ })
-    .endOf("day")
-    .toUTC()
-    .toISO();
+  const fromTs = DateTime.fromISO(fromISO, { zone: TZ }).startOf("day").toUTC().toISO();
+  const toTs = DateTime.fromISO(toISO, { zone: TZ }).endOf("day").toUTC().toISO();
   return { fromTs, toTs };
 }
 
@@ -125,7 +125,8 @@ function normalizeOpenRows(rows, nowUtc) {
    ========================= */
 router.get("/reports", async (req, res) => {
   const company = await getCompany(req);
-  if (!company) return res.redirect("/demo/account");
+  const redirectTo = requireCompanyOrLogin(company);
+  if (redirectTo) return res.redirect(redirectTo);
 
   const employees = await listEmployees(company.id);
 
@@ -145,19 +146,13 @@ router.get("/reports", async (req, res) => {
   ].join("");
 
   const err = String(req.query.err || "").trim();
-  const errHtml = err
-    ? `<div class="demo-alert">❌ ${escapeHtml(err)}</div>`
-    : "";
+  const errHtml = err ? `<div class="demo-alert">❌ ${escapeHtml(err)}</div>` : "";
 
   return res.send(
     layoutDemo(
       "RAPPORTEN",
       `
       <div class="demo-kicker">RAPPORTEN GENEREREN</div>
-      
-
-      
-
       <p class="demo-muted">Onderneming: <b>${escapeHtml(company.name)}</b></p>
 
       ${errHtml}
@@ -203,13 +198,11 @@ router.get("/reports", async (req, res) => {
 // safety: if someone hits it as GET
 router.get("/reports/generate", (req, res) => res.redirect("/reports"));
 
-/* =========================
-   POST /reports/generate
-   ========================= */
 router.post("/reports/generate", async (req, res) => {
   try {
     const company = await getCompany(req);
-    if (!company) return res.redirect("/demo/account");
+    const redirectTo = requireCompanyOrLogin(company);
+    if (redirectTo) return res.redirect(redirectTo);
 
     const employeeIdRaw = String(req.body.employee_id || "").trim();
     const employeeId = employeeIdRaw ? Number(employeeIdRaw) : null;
@@ -225,16 +218,15 @@ router.post("/reports/generate", async (req, res) => {
     return res.redirect(`/reports/view/${reportId}`);
   } catch (err) {
     console.error("REPORT GENERATE failed:", err);
-    return res.redirect(
-      "/reports?err=" + encodeURIComponent(err?.message || "Onbekende fout bij rapportgeneratie")
-    );
+    return res.redirect("/reports?err=" + encodeURIComponent(err?.message || "Onbekende fout bij rapportgeneratie"));
   }
 });
 
 router.post("/reports/generate-last/:days", async (req, res) => {
   try {
     const company = await getCompany(req);
-    if (!company) return res.redirect("/demo/account");
+    const redirectTo = requireCompanyOrLogin(company);
+    if (redirectTo) return res.redirect(redirectTo);
 
     const days = Number(req.params.days);
     if (![7, 14, 21].includes(days)) return res.redirect("/reports?err=Ongeldige%20periode");
@@ -246,9 +238,7 @@ router.post("/reports/generate-last/:days", async (req, res) => {
     return res.redirect(`/reports/view/${reportId}`);
   } catch (err) {
     console.error("REPORT GENERATE-LAST failed:", err);
-    return res.redirect(
-      "/reports?err=" + encodeURIComponent(err?.message || "Onbekende fout bij rapportgeneratie")
-    );
+    return res.redirect("/reports?err=" + encodeURIComponent(err?.message || "Onbekende fout bij rapportgeneratie"));
   }
 });
 
@@ -318,7 +308,8 @@ async function generateReport({ companyId, employeeId, from, to }) {
 
 router.get("/reports/view/:id", async (req, res) => {
   const company = await getCompany(req);
-  if (!company) return res.redirect("/demo/account");
+  const redirectTo = requireCompanyOrLogin(company);
+  if (redirectTo) return res.redirect(redirectTo);
 
   const reportId = Number(req.params.id);
   if (!reportId) return res.redirect("/reports");

@@ -62,7 +62,7 @@ function getBaseUrl(req) {
 
 router.get("/tags", async (req, res) => {
   const company = await getCompany(req);
-  if (!company) return res.redirect("/demo/account");
+  if (!company) return res.redirect("/demo/signup");
 
   const tag = await getScantag(company.id);
   if (!tag) return res.redirect("/wizard/qrs");
@@ -135,17 +135,13 @@ router.get("/tags", async (req, res) => {
       "PUNCTOO — SCANTAG",
       `
         <div class="demo-kicker">JOUW SCANTAG.</div>
-      
-
-        <p class="demo-lead">
-         
-        </p>
-
-       
 
         <div class="demo-actions" style="margin-top:12px;">
           <a class="demo-btn ghost" href="/wizard/reference">TERUG</a>
-          <a class="demo-btn primary" href="/reports">RAPPORTEN</a>
+
+          <!-- ✅ Wizard afronden -> daarna pas login -->
+          <a class="demo-btn primary" href="/wizard/complete">VOLTOOI DEMO</a>
+
           <a class="demo-btn secondary" href="/scantag/${tag.id}.pdf">DOWNLOAD PDF</a>
         </div>
 
@@ -154,7 +150,7 @@ router.get("/tags", async (req, res) => {
           <div style="
             position: relative;
             width: 100%;
-            max-width: 704px; /* 760px kolom - padding */
+            max-width: 704px;
             aspect-ratio: ${TEMPLATE_W} / ${TEMPLATE_H};
           ">
             <img
@@ -191,7 +187,7 @@ router.get("/tags", async (req, res) => {
         </div>
 
         <p class="demo-muted" style="margin-top:18px;">
-        <h1 class="demo-title">Stap 5: SMARTPHONE KOPPELEN.</h1>
+          <h1 class="demo-title">Stap 5: SMARTPHONE KOPPELEN.</h1>
           <b>Gebruik onderstaande codes bij de eerste scan-IN.</b>
         </p>
 

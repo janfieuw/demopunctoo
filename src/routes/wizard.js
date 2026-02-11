@@ -20,7 +20,11 @@ async function getCompany(req) {
   if (!sid) return null;
 
   const company = await get(
-    `SELECT id, name FROM companies WHERE demo_session_id = $1 ORDER BY id LIMIT 1`,
+    `SELECT id, name, wizard_completed
+     FROM companies
+     WHERE demo_session_id = $1
+     ORDER BY id
+     LIMIT 1`,
     [sid]
   );
 
@@ -105,7 +109,8 @@ async function getEmployee(companyId, employeeId) {
    STEP 1 — Company
    ========================= */
 router.get("/wizard/company", async (req, res) => {
-  if (!getDemoSession(req)) return res.redirect("/demo/account");
+  // ✅ geen sessie? terug naar signup landing
+  if (!getDemoSession(req)) return res.redirect("/demo/signup");
 
   const company = await getCompany(req);
 
@@ -137,7 +142,6 @@ router.get("/wizard/company", async (req, res) => {
         <p class="demo-lead">Vul de naam van jouw onderneming in.</p>
 
         <form class="demo-form" method="POST" action="/wizard/company">
-         
           <input class="demo-input" id="name" name="name" required />
 
           <div class="demo-actions">
@@ -151,7 +155,7 @@ router.get("/wizard/company", async (req, res) => {
 
 router.post("/wizard/company", async (req, res) => {
   const sid = getDemoSession(req);
-  if (!sid) return res.redirect("/demo/account");
+  if (!sid) return res.redirect("/demo/signup");
 
   const name = String(req.body.name || "").trim();
   if (!name) return res.redirect("/wizard/company");
@@ -159,8 +163,11 @@ router.post("/wizard/company", async (req, res) => {
   const existing = await getCompany(req);
   if (existing) return res.redirect("/wizard/employees");
 
+  // ✅ wizard_completed default FALSE (via DB default), maar we zetten expliciet mee
   const inserted = await get(
-    `INSERT INTO companies (name, demo_session_id) VALUES ($1,$2) RETURNING id`,
+    `INSERT INTO companies (name, demo_session_id, wizard_completed)
+     VALUES ($1,$2,FALSE)
+     RETURNING id`,
     [name, sid]
   );
 
@@ -281,9 +288,7 @@ router.post("/wizard/employees/add", async (req, res) => {
    ========================= */
 
 async function isEmployeeReferenceOk(employeeId) {
-  const modeRow = await get(`SELECT reference_mode FROM employees WHERE id=$1`, [
-    employeeId,
-  ]);
+  const modeRow = await get(`SELECT reference_mode FROM employees WHERE id=$1`, [employeeId]);
   const mode = modeRow?.reference_mode || null;
 
   if (mode === "ROOSTER") {
@@ -341,7 +346,11 @@ router.get("/wizard/reference", async (req, res) => {
               <button class="demo-btn primary" type="submit">VUL AAN</button>
             </form>
           </td>
-          <td>${isOk ? `<span class="demo-badge ok">OK</span>` : `<span class="demo-badge warn">Niet ingevuld</span>`}</td>
+          <td>${
+            isOk
+              ? `<span class="demo-badge ok">OK</span>`
+              : `<span class="demo-badge warn">Niet ingevuld</span>`
+          }</td>
         </tr>
       `;
     })
@@ -355,10 +364,10 @@ router.get("/wizard/reference", async (req, res) => {
         <h1 class="demo-title">(BELANGRIJKE) STAP 4: REFERENTIETIJDEN.</h1>
 
         <p class="demo-lead">
-        Dit is de verwachte duur na een scan-IN, inclusief eventuele pauzes.<br>
-        De referentie kan elke weekdag gelijk zijn of verschillen per kalenderdag.<br>  
-        Kies daarom per werknemer <b>Rooster</b> of <b>Kalender</b> en klik op <b>Vul aan</b>.
-         <br> Na het opslaan kom je terug naar deze stap.
+          Dit is de verwachte duur na een scan-IN, inclusief eventuele pauzes.<br>
+          De referentie kan elke weekdag gelijk zijn of verschillen per kalenderdag.<br>
+          Kies daarom per werknemer <b>Rooster</b> of <b>Kalender</b> en klik op <b>Vul aan</b>.
+          <br> Na het opslaan kom je terug naar deze stap.
         </p>
 
         <p class="demo-muted">Onderneming: <b>${escapeHtml(company.name)}</b></p>
@@ -399,10 +408,7 @@ router.post("/wizard/reference/open", async (req, res) => {
   const emp = await getEmployee(company.id, employeeId);
   if (!emp) return res.redirect("/wizard/reference");
 
-  await run(`UPDATE employees SET reference_mode=$1 WHERE id=$2`, [
-    mode,
-    employeeId,
-  ]);
+  await run(`UPDATE employees SET reference_mode=$1 WHERE id=$2`, [mode, employeeId]);
 
   if (mode === "ROOSTER") {
     return res.redirect(`/wizard/reference/rooster?employeeId=${employeeId}`);
@@ -413,7 +419,6 @@ router.post("/wizard/reference/open", async (req, res) => {
 /* =========================
    ROOSTER (pattern)
    ========================= */
-
 router.get("/wizard/reference/rooster", async (req, res) => {
   const company = await getCompany(req);
   if (!company) return res.redirect("/wizard/company");
@@ -434,9 +439,7 @@ router.get("/wizard/reference/rooster", async (req, res) => {
     [employeeId]
   );
 
-  const map = new Map(
-    existing.map((r) => [Number(r.weekday), Number(r.expected_minutes)])
-  );
+  const map = new Map(existing.map((r) => [Number(r.weekday), Number(r.expected_minutes)]));
 
   const rows = [1, 2, 3, 4, 5, 6, 7]
     .map((dow) => {
@@ -498,7 +501,6 @@ router.post("/wizard/reference/rooster/save", async (req, res) => {
   if (!emp) return res.redirect("/wizard/reference");
 
   await run(`UPDATE employees SET reference_mode='ROOSTER' WHERE id=$1`, [employeeId]);
-
   await run(`DELETE FROM employee_reference_pattern WHERE employee_id=$1`, [employeeId]);
 
   for (const dow of [1, 2, 3, 4, 5, 6, 7]) {
@@ -731,7 +733,7 @@ router.post("/wizard/reference/kalender/save", async (req, res) => {
 });
 
 /* =========================
-   STEP 4 — go to tags
+   STEP 4 — go to tags (stap 5)
    ========================= */
 router.get("/wizard/qrs", async (req, res) => {
   const company = await getCompany(req);
@@ -746,7 +748,35 @@ router.get("/wizard/qrs", async (req, res) => {
   }
 
   await ensureScantag(company.id);
+
+  // ✅ Stap 5 tonen (tags)
   return res.redirect("/tags");
+});
+
+/* =========================
+   COMPLETE — markeer wizard klaar + forceer login nadien
+   ========================= */
+router.get("/wizard/complete", async (req, res) => {
+  const company = await getCompany(req);
+  if (!company) return res.redirect("/demo/signup");
+
+  const employees = await getEmployees(company.id);
+  if (employees.length < 2) return res.redirect("/wizard/employees");
+
+  for (const e of employees) {
+    const ok = await isEmployeeReferenceOk(e.id);
+    if (!ok) return res.redirect("/wizard/reference");
+  }
+
+  await ensureScantag(company.id);
+
+  await run(`UPDATE companies SET wizard_completed=TRUE WHERE id=$1`, [company.id]);
+
+  // ✅ Forceer “pas daarna login”
+  res.clearCookie("demo_account");
+  res.clearCookie("demo_session");
+
+  return res.redirect("/ready");
 });
 
 module.exports = router;

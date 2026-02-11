@@ -10,6 +10,7 @@ const adminRouter = require("./routes/admin");
 const reportsRouter = require("./routes/reports");
 const scanRouter = require("./routes/scan");
 const tagsRouter = require("./routes/tags");
+const demoReadyRouter = require("./routes/demoReady");
 
 // ScanTag flow + PDF
 const deviceRouter = require("./routes/device");
@@ -31,7 +32,8 @@ function createApp() {
   // 2) src/static → /static  (logo’s, png’s, extra assets)
   app.use("/static", express.static(path.join(__dirname, "static")));
 
-  app.get("/", (req, res) => res.redirect("/demo/account"));
+  // ✅ Landing = signup
+  app.get("/", (req, res) => res.redirect("/demo/signup"));
 
   app.use(accountRouter);
   app.use(wizardRouter);
@@ -39,6 +41,7 @@ function createApp() {
   app.use(reportsRouter);
   app.use(scanRouter);
   app.use(tagsRouter);
+  app.use(demoReadyRouter);
 
   app.use(deviceRouter);
   app.use(pairRouter);
