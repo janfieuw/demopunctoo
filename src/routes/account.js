@@ -144,10 +144,17 @@ function renderSignup({ error = "", email = "" } = {}) {
     "DEMO — ACCOUNT AANMAKEN",
     `
       <div class="demo-kicker">DEMO UITTESTEN <br> IN 5 STAPPEN</div>
+      <p class="demo-lead">
+       Doorloop de wizard van 5 stappen. <br>
+       Na afloop ben je meteen klaar om te gaan testen.<br>
+       Deze demo is beperkt tot twee werknemers en 15 dagen testtijd.
+              </p>
+
       <div class="demo-title">Stap 1: ACCOUNT AANMAKEN.</div>
 
       <p class="demo-lead">
-        Maak een account aan. Kies een e-mailadres als login en vul je paswoord twee keer in.<br />
+        Maak een account aan. <br>
+        Kies een e-mailadres als login en vul je paswoord twee keer in.<br>
         Heb je al een account?
         <a href="/demo/login" class="demo-link">Ga naar login.</a>
       </p>
@@ -168,7 +175,7 @@ function renderSignup({ error = "", email = "" } = {}) {
 
         <div class="demo-actions" style="display:flex; gap:10px;">
           <button class="demo-btn primary" type="submit">ACCOUNT AANMAKEN</button>
-          <a class="demo-btn ghost" href="/demo/login">ANNULEREN</a>
+ 
         </div>
       </form>
     `,

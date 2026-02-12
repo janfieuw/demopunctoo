@@ -246,7 +246,7 @@ router.get("/wizard/employees", async (req, res) => {
         </div>
 
         <div class="demo-actions" style="margin-top:18px;">
-          <a class="demo-btn ghost" href="/wizard/company">TERUG</a>
+        
           ${
             employees.length >= 2
               ? `<a class="demo-btn primary" href="/wizard/reference">VOLGENDE</a>`
@@ -361,7 +361,7 @@ router.get("/wizard/reference", async (req, res) => {
       "DEMO — STAP 3",
       `
         <div class="demo-kicker">DEMO UITTESTEN <BR> IN 5 STAPPEN</div>
-        <h1 class="demo-title">(BELANGRIJKE) STAP 4: REFERENTIETIJDEN.</h1>
+        <h1 class="demo-title">STAP 4: REFERENTIETIJDEN.</h1>
 
         <p class="demo-lead">
           Dit is de verwachte duur na een scan-IN, inclusief eventuele pauzes.<br>
@@ -382,7 +382,7 @@ router.get("/wizard/reference", async (req, res) => {
         </div>
 
         <div class="demo-actions" style="margin-top:18px;">
-          <a class="demo-btn ghost" href="/wizard/employees">TERUG</a>
+      
           ${
             allOk
               ? `<a class="demo-btn primary" href="/wizard/qrs">VOLGENDE</a>`
@@ -637,17 +637,7 @@ router.get("/wizard/reference/kalender", async (req, res) => {
 
           <hr style="margin:18px 0;" />
 
-          <p class="demo-muted"><b>Extra dag toevoegen</b> (optioneel)</p>
-          <div class="demo-row" style="gap:10px; align-items:end;">
-            <div>
-              <label class="demo-label">Dag</label>
-              <input class="demo-input" type="date" name="extra_day" />
-            </div>
-            <div>
-              <label class="demo-label">Minuten</label>
-              <input class="demo-input" type="number" min="0" name="extra_minutes" placeholder="min" />
-            </div>
-          </div>
+         
 
           <div class="demo-actions" style="margin-top:18px;">
             <a class="demo-btn ghost" href="/wizard/reference">ANNULEREN</a>
