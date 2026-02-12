@@ -156,7 +156,7 @@ function renderSignup({ error = "", email = "" } = {}) {
         Maak een account aan. <br>
         Kies een e-mailadres als login en vul je paswoord twee keer in.<br>
         Heb je al een account?
-        <a href="/demo/login" class="demo-link">Ga naar login.</a>
+        <a href="/demo/login" class="demo-link">Ga naar login.</a><br>
       </p>
 
       ${errorHtml}

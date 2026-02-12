@@ -617,12 +617,12 @@ router.get("/wizard/reference/kalender", async (req, res) => {
         <p class="demo-muted">Werknemer: <b>${escapeHtml(employeeLabel(emp))}</b></p>
 
         <p class="demo-lead">
-          Je hoeft enkel de dagen in te vullen waarop je zeker een scan-IN zal hebben.
+          Je hoeft enkel de dagen in te vullen waarop je zeker een scan-IN zal hebben.<br>
           Leeg of 0 = geen referentietijd op die dag.
         </p>
         <p class="demo-muted">De demo is beperkt tot de volgende 15 dagen.</p>
         <p class="demo-muted">
-          <b>Opgelet:</b> dagen waarop al een <b>IN-scan</b> is geregistreerd kunnen niet meer aangepast worden.
+        
         </p>
 
         <form class="demo-form" method="POST" action="/wizard/reference/kalender/save">
@@ -635,7 +635,7 @@ router.get("/wizard/reference/kalender", async (req, res) => {
             </table>
           </div>
 
-          <hr style="margin:18px 0;" />
+         
 
          
 
