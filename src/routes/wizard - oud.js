@@ -9,31 +9,6 @@ const router = express.Router();
 const TZ = "Europe/Brussels";
 
 /* =========================
-   Hide logo helper (only for specific pages)
-   ========================= */
-const HIDE_LOGO_STYLE = `
-  <style>
-    /* Hide any footer/brand logo on these pages */
-    .demo-logo-fixed,
-    .logo-footer,
-    .demo-footer-logo,
-    .brand-logo,
-    .mypunctoo-logo,
-    footer .logo,
-    footer img[alt*="MyPunctoo"],
-    footer img[src*="logo"] {
-      display: none !important;
-      visibility: hidden !important;
-      opacity: 0 !important;
-      height: 0 !important;
-      width: 0 !important;
-      overflow: hidden !important;
-      pointer-events: none !important;
-    }
-  </style>
-`;
-
-/* =========================
    Session helpers
    ========================= */
 function getDemoSession(req) {
@@ -271,6 +246,7 @@ router.get("/wizard/employees", async (req, res) => {
         </div>
 
         <div class="demo-actions" style="margin-top:18px;">
+        
           ${
             employees.length >= 2
               ? `<a class="demo-btn primary" href="/wizard/reference">VOLGENDE</a>`
@@ -406,6 +382,7 @@ router.get("/wizard/reference", async (req, res) => {
         </div>
 
         <div class="demo-actions" style="margin-top:18px;">
+      
           ${
             allOk
               ? `<a class="demo-btn primary" href="/wizard/qrs">VOLGENDE</a>`
@@ -485,8 +462,6 @@ router.get("/wizard/reference/rooster", async (req, res) => {
     layoutDemo(
       "DEMO — ROOSTER INVULLEN.",
       `
-        ${HIDE_LOGO_STYLE}
-
         <div class="demo-kicker">DEMO UITTESTEN <BR> IN 5 STAPPEN</div>
         <h1 class="demo-title">ROOSTER INVULLEN.</h1>
 
@@ -636,8 +611,6 @@ router.get("/wizard/reference/kalender", async (req, res) => {
     layoutDemo(
       "DEMO — KALENDER",
       `
-        ${HIDE_LOGO_STYLE}
-
         <div class="demo-kicker">DEMO UITTESTEN <BR> IN 5 STAPPEN</div>
         <h1 class="demo-title">KALENDER INVULLEN.</h1>
 
@@ -649,7 +622,7 @@ router.get("/wizard/reference/kalender", async (req, res) => {
         </p>
         <p class="demo-muted">De demo is beperkt tot de volgende 15 dagen.</p>
         <p class="demo-muted">
-
+        
         </p>
 
         <form class="demo-form" method="POST" action="/wizard/reference/kalender/save">
@@ -661,6 +634,10 @@ router.get("/wizard/reference/kalender", async (req, res) => {
               <tbody>${rows}</tbody>
             </table>
           </div>
+
+         
+
+         
 
           <div class="demo-actions" style="margin-top:18px;">
             <a class="demo-btn ghost" href="/wizard/reference">ANNULEREN</a>
