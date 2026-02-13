@@ -8,28 +8,10 @@ const { layoutDemo, escapeHtml } = require("../ui/layout");
 const router = express.Router();
 const TZ = "Europe/Brussels";
 
-/* =========================
-   Hide logo helper (only for specific pages)
-   ========================= */
-const HIDE_LOGO_STYLE = `
+// Hide the MyPunctoo logo/footer on specific wizard pages (rooster + kalender)
+const HIDE_DEMO_FOOTER_LOGO_STYLE = `
   <style>
-    /* Hide any footer/brand logo on these pages */
-    .demo-logo-fixed,
-    .logo-footer,
-    .demo-footer-logo,
-    .brand-logo,
-    .mypunctoo-logo,
-    footer .logo,
-    footer img[alt*="MyPunctoo"],
-    footer img[src*="logo"] {
-      display: none !important;
-      visibility: hidden !important;
-      opacity: 0 !important;
-      height: 0 !important;
-      width: 0 !important;
-      overflow: hidden !important;
-      pointer-events: none !important;
-    }
+    .demo-left-footer { display: none !important; }
   </style>
 `;
 
@@ -60,7 +42,6 @@ async function getCompany(req) {
    Generic helpers
    ========================= */
 function generateScanCode() {
-  // demo: kort & ok
   return crypto.randomBytes(4).toString("hex");
 }
 
@@ -134,7 +115,6 @@ async function getEmployee(companyId, employeeId) {
    STEP 1 — Company
    ========================= */
 router.get("/wizard/company", async (req, res) => {
-  // ✅ geen sessie? terug naar signup landing
   if (!getDemoSession(req)) return res.redirect("/demo/signup");
 
   const company = await getCompany(req);
@@ -144,16 +124,16 @@ router.get("/wizard/company", async (req, res) => {
       layoutDemo(
         "DEMO — STAP 1",
         `
-          <div class="demo-kicker">DEMO UITTESTEN <BR> IN 5 STAPPEN</div>
-          <h1 class="demo-title">STAP 2: JOUW ONDERNEMING.</h1>
-          <p class="demo-lead">Vul de naam van jouw onderneming in.</p>
+        <div class="demo-kicker">DEMO UITTESTEN <BR> IN 5 STAPPEN</div>
+        <h1 class="demo-title">STAP 2: JOUW ONDERNEMING.</h1>
+        <p class="demo-lead">Vul de naam van jouw onderneming in.</p>
 
-          <p class="demo-muted"><b>${escapeHtml(company.name)}</b></p>
+        <p class="demo-muted"><b>${escapeHtml(company.name)}</b></p>
 
-          <div class="demo-actions">
-            <a class="demo-btn primary" href="/wizard/employees">VOLGENDE</a>
-          </div>
-        `
+        <div class="demo-actions">
+          <a class="demo-btn primary" href="/wizard/employees">VOLGENDE</a>
+        </div>
+      `
       )
     );
   }
@@ -188,7 +168,6 @@ router.post("/wizard/company", async (req, res) => {
   const existing = await getCompany(req);
   if (existing) return res.redirect("/wizard/employees");
 
-  // ✅ wizard_completed default FALSE (via DB default), maar we zetten expliciet mee
   const inserted = await get(
     `INSERT INTO companies (name, demo_session_id, wizard_completed)
      VALUES ($1,$2,FALSE)
@@ -485,8 +464,7 @@ router.get("/wizard/reference/rooster", async (req, res) => {
     layoutDemo(
       "DEMO — ROOSTER INVULLEN.",
       `
-        ${HIDE_LOGO_STYLE}
-
+        ${HIDE_DEMO_FOOTER_LOGO_STYLE}
         <div class="demo-kicker">DEMO UITTESTEN <BR> IN 5 STAPPEN</div>
         <h1 class="demo-title">ROOSTER INVULLEN.</h1>
 
@@ -552,7 +530,6 @@ router.post("/wizard/reference/rooster/save", async (req, res) => {
    ========================= */
 
 async function getLockedCalendarDays(employeeId) {
-  // lock days where there is already an IN scan
   const locked = await all(
     `
     SELECT DISTINCT ("timestamp" AT TIME ZONE 'Europe/Brussels')::date AS day
@@ -636,8 +613,7 @@ router.get("/wizard/reference/kalender", async (req, res) => {
     layoutDemo(
       "DEMO — KALENDER",
       `
-        ${HIDE_LOGO_STYLE}
-
+        ${HIDE_DEMO_FOOTER_LOGO_STYLE}
         <div class="demo-kicker">DEMO UITTESTEN <BR> IN 5 STAPPEN</div>
         <h1 class="demo-title">KALENDER INVULLEN.</h1>
 
@@ -648,9 +624,6 @@ router.get("/wizard/reference/kalender", async (req, res) => {
           Leeg of 0 = geen referentietijd op die dag.
         </p>
         <p class="demo-muted">De demo is beperkt tot de volgende 15 dagen.</p>
-        <p class="demo-muted">
-
-        </p>
 
         <form class="demo-form" method="POST" action="/wizard/reference/kalender/save">
           <input type="hidden" name="employee_id" value="${employeeId}" />
@@ -684,7 +657,6 @@ router.post("/wizard/reference/kalender/save", async (req, res) => {
 
   await run(`UPDATE employees SET reference_mode='KALENDER' WHERE id=$1`, [employeeId]);
 
-  // verwijder niet-locked entries
   await run(
     `
     DELETE FROM employee_reference_calendar
@@ -762,7 +734,6 @@ router.get("/wizard/qrs", async (req, res) => {
 
   await ensureScantag(company.id);
 
-  // ✅ Stap 5 tonen (tags)
   return res.redirect("/tags");
 });
 
@@ -785,7 +756,6 @@ router.get("/wizard/complete", async (req, res) => {
 
   await run(`UPDATE companies SET wizard_completed=TRUE WHERE id=$1`, [company.id]);
 
-  // ✅ Forceer “pas daarna login”
   res.clearCookie("demo_account");
   res.clearCookie("demo_session");
 
