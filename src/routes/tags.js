@@ -1,13 +1,14 @@
 // src/routes/tags.js
 const express = require("express");
-const { DateTime } = require("luxon");
 const QRCode = require("qrcode");
 const { get, all } = require("../db");
 const { layoutDemo, escapeHtml } = require("../ui/layout");
 
 const router = express.Router();
-const TZ = "Europe/Brussels";
 
+/* =========================
+   Session helpers
+   ========================= */
 function getDemoSession(req) {
   return String(req.cookies?.demo_session || "").trim();
 }
@@ -22,6 +23,9 @@ async function getCompany(req) {
   );
 }
 
+/* =========================
+   Data helpers
+   ========================= */
 async function getScantag(companyId) {
   return await get(
     `SELECT id, name FROM scantags WHERE company_id = $1 ORDER BY id ASC LIMIT 1`,
@@ -60,6 +64,9 @@ function getBaseUrl(req) {
   return `${proto}://${req.get("host")}`;
 }
 
+/* =========================
+   Route
+   ========================= */
 router.get("/tags", async (req, res) => {
   const company = await getCompany(req);
   if (!company) return res.redirect("/demo/signup");
@@ -74,7 +81,7 @@ router.get("/tags", async (req, res) => {
   const inUrl = `${baseUrl}/t/${tag.id}/in`;
   const outUrl = `${baseUrl}/t/${tag.id}/out`;
 
-  // QR’s als dataURL (worden als <img> bovenop template geplaatst)
+  // QR’s als dataURL (voor later gebruik indien je ze wil tonen)
   const qrOpts = { margin: 1, width: 600 };
   const inQrDataUrl = await QRCode.toDataURL(inUrl, qrOpts);
   const outQrDataUrl = await QRCode.toDataURL(outUrl, qrOpts);
@@ -94,59 +101,28 @@ router.get("/tags", async (req, res) => {
           )
           .join("");
 
-  // Template afmetingen (jouw file is 1772x1182)
-  // QR vakken (pixel coords in template):
-  // Left:  x=258 y=390 w=383 h=383
-  // Right: x=1120 y=390 w=383 h=383
-  //
-  // We plaatsen QR’s via percentages zodat het mee schaalt met de template.
-  const TEMPLATE_W = 1772;
-  const TEMPLATE_H = 1182;
-
-  const leftBox = { x: 258, y: 390, w: 383, h: 383 };
-  const rightBox = { x: 1120, y: 390, w: 383, h: 383 };
-
-  function pctX(px) {
-    return (px / TEMPLATE_W) * 100;
-  }
-  function pctY(px) {
-    return (px / TEMPLATE_H) * 100;
-  }
-
-  // padding binnen het witte vak (in template pixels)
-  const PAD = 16;
-
-  const inStyle = `
-    left:${pctX(leftBox.x + PAD)}%;
-    top:${pctY(leftBox.y + PAD)}%;
-    width:${pctX(leftBox.w - 2 * PAD)}%;
-    height:${pctY(leftBox.h - 2 * PAD)}%;
-  `;
-
-  const outStyle = `
-    left:${pctX(rightBox.x + PAD)}%;
-    top:${pctY(rightBox.y + PAD)}%;
-    width:${pctX(rightBox.w - 2 * PAD)}%;
-    height:${pctY(rightBox.h - 2 * PAD)}%;
-  `;
-
   return res.send(
     layoutDemo(
       "PUNCTOO — SCANTAG",
       `
         <div class="demo-kicker">DEMO UITTESTEN IN 5 STAPPEN.</div>
-          <h1 class="demo-title">Stap 5: SMARTPHONE KOPPELEN.</h1>
-          
-        
+        <h1 class="demo-title">STAP 5: SMARTPHONE KOPPELEN.</h1>
 
-          <b>1. Download jouw persoonlijke ScanTag.</b> <br>Druk jouw ScanTag af om later te kunnen gebruiken. <br>Gebruik onderstaande codes bij de eerste scan-IN.<br><br>
-
-          <a class="demo-btn secondary" href="/scantag/${tag.id}.pdf">DOWNLOAD JOUW SCANTAG</a>
-        </div>
-          <br><b>Gebruik onderstaande codes bij de eerste scan-IN.</b>
+        <p class="demo-lead">
+          <b>1. Download jouw persoonlijke ScanTag.</b><br>
+          Druk jouw ScanTag af om later te kunnen gebruiken.<br>
+          Gebruik onderstaande codes bij de eerste scan-IN.
         </p>
 
-        <div class="demo-tablewrap" style="margin-top:10px;">
+        <div class="demo-actions" style="margin-top:14px;">
+          <a class="demo-btn secondary" href="/scantag/${tag.id}.pdf">DOWNLOAD JOUW SCANTAG</a>
+        </div>
+
+        <p class="demo-muted" style="margin-top:16px;">
+          <b>Gebruik onderstaande codes bij de eerste scan-IN.</b>
+        </p>
+
+        <div class="demo-tablewrap scroll-x" style="margin-top:10px;">
           <table class="demo-table">
             <thead>
               <tr>
@@ -158,14 +134,27 @@ router.get("/tags", async (req, res) => {
             <tbody>${empRows}</tbody>
           </table>
         </div>
-        
-         <b><br>2. Klaar?</b> Rond nu jouw wizard af en klik op onderstaande knop.<br><br>
-          <a class="demo-btn primary" href="/wizard/complete">VOLTOOI DEMO</a>     
+
+        <p class="demo-lead" style="margin-top:16px;">
+          <b>2. Klaar?</b> Rond nu jouw wizard af en klik op onderstaande knop.
+        </p>
+
+        <div class="demo-actions" style="margin-top:12px;">
+          <a class="demo-btn primary" href="/wizard/complete">VOLTOOI DEMO</a>
         </div>
 
-       
-
-       
+        <!-- (optioneel) QR's tonen, als je wil debuggen:
+        <div style="margin-top:22px; display:flex; gap:16px; flex-wrap:wrap;">
+          <div>
+            <div class="demo-muted"><b>IN</b></div>
+            <img src="${inQrDataUrl}" alt="QR IN" style="max-width:220px; height:auto;" />
+          </div>
+          <div>
+            <div class="demo-muted"><b>OUT</b></div>
+            <img src="${outQrDataUrl}" alt="QR OUT" style="max-width:220px; height:auto;" />
+          </div>
+        </div>
+        -->
       `
     )
   );
