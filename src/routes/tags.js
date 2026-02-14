@@ -136,10 +136,10 @@ router.get("/tags", async (req, res) => {
       `
         <div class="demo-kicker">DEMO UITTESTEN IN 5 STAPPEN.</div>
           <h1 class="demo-title">Stap 5: SMARTPHONE KOPPELEN.</h1>
-            <div class="demo-actions" style="margin-top:12px;">
+          
         
 
-          <b>1. Download jouw persoonlijke ScanTag.</b> Druk jouw ScanTag af om later te kunnen gebruiken. <br>Gebruik onderstaande codes bij de eerste scan-IN.<br>
+          <b>1. Download jouw persoonlijke ScanTag.</b> <br>Druk jouw ScanTag af om later te kunnen gebruiken. <br>Gebruik onderstaande codes bij de eerste scan-IN.<br><br>
 
           <a class="demo-btn secondary" href="/scantag/${tag.id}.pdf">DOWNLOAD JOUW SCANTAG</a>
         </div>
