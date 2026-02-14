@@ -137,10 +137,9 @@ router.get("/tags", async (req, res) => {
         <div class="demo-kicker">DEMO UITTESTEN IN 5 STAPPEN.</div>
           <h1 class="demo-title">Stap 5: SMARTPHONE KOPPELEN.</h1>
             <div class="demo-actions" style="margin-top:12px;">
-          <a class="demo-btn ghost" href="/wizard/reference">TERUG</a>
+        
 
-          <!-- ✅ Wizard afronden -> daarna pas login -->
-          <a class="demo-btn primary" href="/wizard/complete">VOLTOOI DEMO</a>
+        
 
           <a class="demo-btn secondary" href="/scantag/${tag.id}.pdf">DOWNLOAD PDF</a>
         </div>
@@ -160,54 +159,13 @@ router.get("/tags", async (req, res) => {
           </table>
         </div>
         <div class="demo-actions" style="margin-top:12px;">
-          <a class="demo-btn ghost" href="/wizard/reference">TERUG</a>
-
-          <!-- ✅ Wizard afronden -> daarna pas login -->
+        
           <a class="demo-btn primary" href="/wizard/complete">VOLTOOI DEMO</a>
 
-          <a class="demo-btn secondary" href="/scantag/${tag.id}.pdf">DOWNLOAD PDF</a>
+       
         </div>
 
-        <!-- ✅ TEMPLATE + QR overlay -->
-        <div style="margin-top:16px;">
-          <div style="
-            position: relative;
-            width: 100%;
-            max-width: 704px;
-            aspect-ratio: ${TEMPLATE_W} / ${TEMPLATE_H};
-          ">
-            <img
-              src="/static/scantag-template.png"
-              alt="ScanTag template"
-              style="
-                position:absolute; inset:0;
-                width:100%; height:100%;
-                object-fit:contain;
-                display:block;
-              "
-            />
-
-            <img
-              src="${inQrDataUrl}"
-              alt="IN QR"
-              style="
-                position:absolute;
-                ${inStyle}
-                object-fit:contain;
-              "
-            />
-
-            <img
-              src="${outQrDataUrl}"
-              alt="OUT QR"
-              style="
-                position:absolute;
-                ${outStyle}
-                object-fit:contain;
-              "
-            />
-          </div>
-        </div>
+       
 
        
       `
