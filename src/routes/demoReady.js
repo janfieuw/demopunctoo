@@ -93,19 +93,13 @@ router.get("/ready", (req, res) => {
       De demo-opstelling is nu klaar voor gebruik.
     </p>
 
-    <p>
-      Vanaf dit punt kan je enkel nog <span class="strong">rapporten bekijken</span>.
-      Aanpassingen aan werknemers, roosters of instellingen
-      zijn in deze demo niet mogelijk.
-    </p>
+   
 
     <a href="/demo/login" class="btn">
       GA NAAR LOGIN & RAPPORTEN
     </a>
 
-    <div class="muted">
-      Wil je instellingen wijzigen? Maak dan een nieuwe account aan.
-    </div>
+   
   </main>
 </body>
 </html>`);
