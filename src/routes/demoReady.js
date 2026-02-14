@@ -87,7 +87,8 @@ router.get("/ready", (req, res) => {
 <body>
   <main class="wrap">
     <h1>DEMO-CONFIGURATIE VOLTOOID</h1>
-
+ <div class="demo-kicker">DEMO UITTESTEN <br> IN 5 STAPPEN</div>
+      <p class="demo-lead">
     <p>
       Je ScanTags en smartphones zijn gekoppeld.<br />
       De demo-opstelling is nu klaar voor gebruik.
