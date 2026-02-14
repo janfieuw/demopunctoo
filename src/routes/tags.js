@@ -139,9 +139,11 @@ router.get("/tags", async (req, res) => {
             <div class="demo-actions" style="margin-top:12px;">
         
 
-        
+          <b>1. Download jouw persoonlijke ScanTag.</b><br>
+          Druk jouw ScanTag af om later te kunnen gebruiken.<br>
+          Gebruik onderstaande codes bij de eerste scan-IN.<br>
 
-          <a class="demo-btn secondary" href="/scantag/${tag.id}.pdf">DOWNLOAD PDF</a>
+          <a class="demo-btn secondary" href="/scantag/${tag.id}.pdf">DOWNLOAD JOUW SCANTAG</a>
         </div>
           <b>Gebruik onderstaande codes bij de eerste scan-IN.</b>
         </p>
@@ -159,7 +161,8 @@ router.get("/tags", async (req, res) => {
           </table>
         </div>
         <div class="demo-actions" style="margin-top:12px;">
-        
+         <b>2. Klaar?</b><br>
+          Rond nu jouw wizard af en klik op onderstaande knop.<br>
           <a class="demo-btn primary" href="/wizard/complete">VOLTOOI DEMO</a>
 
        
