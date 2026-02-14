@@ -86,11 +86,12 @@ router.get("/ready", (req, res) => {
 
 <body>
   <main class="wrap">
-    <h1>DEMO-CONFIGURATIE VOLTOOID</h1>
+   <div class="demo-kicker">CONFIGURATIE VOLTOOID</div>
 
     <p>
-      Je ScanTags en smartphones zijn gekoppeld.<br />
-      De demo-opstelling is nu klaar voor gebruik.
+      Je ScanTags en smartphones zijn nu gekoppeld.<br />
+      De demo-opstelling is nu klaar voor gebruik. <br><br>
+      Heb je problemen ondervonden? Contacteer dan href="mailto:support@punctoo.be">support@punctoo.be</a>
     </p>
 
     <p>
