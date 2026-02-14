@@ -115,7 +115,7 @@ router.get("/tags", async (req, res) => {
         </p>
 
         <div class="demo-actions" style="margin-top:14px;">
-          <a class="demo-btn secondary" href="/scantag/${tag.id}.pdf">DOWNLOAD JOUW SCANTAG</a>
+          <a class="demo-btn primary" href="/scantag/${tag.id}.pdf">DOWNLOAD JOUW SCANTAG</a>
         </div>
 
         <p class="demo-muted" style="margin-top:16px;">
