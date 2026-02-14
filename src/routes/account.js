@@ -105,14 +105,10 @@ function renderLogin({ error = "", email = "" } = {}) {
   return renderWithDemoLayout(
     "DEMO — LOGIN",
     `
-      <div class="demo-kicker">DEMO UITESTEN <br> IN 5 STAPPEN</div>
+      <div class="demo-kicker">RAPPORTEN GENEREREN</div>
       <div class="demo-title">LOGIN.</div>
 
-      <p class="demo-lead">
-        Login: vul je e-mailadres en paswoord in.<br />
-        Heb je nog geen account?
-        <a href="/demo/signup" class="demo-link">Maak deze dan eerst aan.</a>
-      </p>
+   
 
       ${errorHtml}
 
