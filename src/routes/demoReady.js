@@ -1,13 +1,6 @@
 const express = require("express");
 const router = express.Router();
 
-/**
- * Demo afgerond – expliciete overgang naar gebruik
- * Styling: zelfde typografie-feel als de andere demo pages:
- * - Roboto
- * - volledige achtergrond warm geel
- * - alle tekst wit
- */
 router.get("/ready", (req, res) => {
   res.send(`<!DOCTYPE html>
 <html lang="nl">
@@ -16,10 +9,10 @@ router.get("/ready", (req, res) => {
   <title>Demo klaar</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Roboto zoals de rest (fallbacks inbegrepen) -->
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap');
+  <!-- JetBrains Mono -->
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
 
+  <style>
     :root{
       --punctoo-yellow: #FDC500;
       --white: #ffffff;
@@ -32,7 +25,7 @@ router.get("/ready", (req, res) => {
 
     body {
       margin: 0;
-      font-family: Roboto, Arial, Helvetica, sans-serif;
+      font-family: 'JetBrains Mono', monospace;
       background: var(--punctoo-yellow);
       color: var(--white);
       display: flex;
@@ -41,24 +34,23 @@ router.get("/ready", (req, res) => {
     }
 
     .wrap {
-      width: min(820px, 92vw);
-      padding: 40px 16px;
+      width: min(900px, 92vw);
+      padding: 40px 20px;
       text-align: center;
     }
 
-    /* Titel iets “krachtiger” zoals in je demo-wizard */
     h1 {
-      margin: 0 0 14px 0;
-      font-size: clamp(26px, 3.2vw, 40px);
-      font-weight: 900;
-      letter-spacing: 0.02em;
+      margin: 0 0 24px 0;
+      font-size: clamp(28px, 4vw, 46px);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
     }
 
     p {
-      margin: 10px 0;
-      font-size: 16px;
-      line-height: 1.55;
-      opacity: 0.98;
+      font-size: 15px;
+      line-height: 1.6;
+      margin: 12px 0;
     }
 
     .strong {
@@ -67,24 +59,25 @@ router.get("/ready", (req, res) => {
 
     .btn {
       display: inline-block;
-      margin-top: 22px;
-      padding: 14px 26px;
+      margin-top: 28px;
+      padding: 14px 30px;
       background: var(--black);
       color: var(--white);
       text-decoration: none;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
       border-radius: 10px;
-      font-weight: 900;
-      letter-spacing: 0.02em;
       transition: transform 0.08s ease, opacity 0.12s ease;
     }
 
     .btn:active {
       transform: translateY(1px);
-      opacity: 0.92;
+      opacity: 0.9;
     }
 
     .muted {
-      margin-top: 16px;
+      margin-top: 18px;
       font-size: 13px;
       opacity: 0.85;
     }
@@ -92,8 +85,8 @@ router.get("/ready", (req, res) => {
 </head>
 
 <body>
-  <main class="wrap" role="main" aria-label="Demo configuratie voltooid">
-    <h1>Demo-configuratie voltooid</h1>
+  <main class="wrap">
+    <h1>DEMO-CONFIGURATIE VOLTOOID</h1>
 
     <p>
       Je ScanTags en smartphones zijn gekoppeld.<br />
@@ -106,7 +99,9 @@ router.get("/ready", (req, res) => {
       zijn in deze demo niet mogelijk.
     </p>
 
-    <a href="/demo/login" class="btn">Ga naar login &amp; rapporten</a>
+    <a href="/demo/login" class="btn">
+      GA NAAR LOGIN & RAPPORTEN
+    </a>
 
     <div class="muted">
       Wil je instellingen wijzigen? Maak dan een nieuwe account aan.
