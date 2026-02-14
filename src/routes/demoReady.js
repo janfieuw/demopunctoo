@@ -97,12 +97,11 @@ Start nu met het bekijken van je rapporten.
 
   
 
-    <div class="actions">
-     <a class="btn" href="/demo/demoportal.js" class="btn">
-      GA NAAR RAPPORTEN
-    </a>
+ 
 
-
+  <div class="demo-actions" style="margin-top:14px;">
+          <a class="demo-btn primary" href="/demo/demoportal.js">GA NAAR RAPPORTEN</a>
+        </div>
 
    
   </main>
