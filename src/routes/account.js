@@ -105,7 +105,7 @@ function renderLogin({ error = "", email = "" } = {}) {
   return renderWithDemoLayout(
     "DEMO — LOGIN",
     `
-      <div class="demo-kicker">DEMO UITTESTEN <br> IN 5 STAPPEN</div>
+      <div class="demo-kicker">DEMO UITESTEN <br> IN 5 STAPPEN</div>
       <div class="demo-title">LOGIN.</div>
 
       <p class="demo-lead">
