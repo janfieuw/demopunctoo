@@ -85,19 +85,9 @@ router.get("/ready", (req, res) => {
 </head>
 
 <body>
-<div class="demo-kicker">DEMO UITTESTEN <br> IN 5 STAPPEN</div>
-      <p class="demo-lead">
-       Doorloop de wizard van 5 stappen. <br>
-       Na afloop ben je meteen klaar om te gaan testen.<br>
-       Deze demo is beperkt tot twee werknemers en 15 dagen testtijd.
-              </p>
-
-      <div class="demo-title">Stap 1: ACCOUNT AANMAKEN.</div>  
-
-<main class="wrap">
+  <main class="wrap">
     <h1>DEMO-CONFIGURATIE VOLTOOID</h1>
- <div class="demo-kicker">DEMO UITTESTEN <br> IN 5 STAPPEN</div>
-      <p class="demo-lead">
+
     <p>
       Je ScanTags en smartphones zijn gekoppeld.<br />
       De demo-opstelling is nu klaar voor gebruik.
