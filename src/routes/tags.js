@@ -145,7 +145,7 @@ router.get("/tags", async (req, res) => {
         </div>
           <br><b>Gebruik onderstaande codes bij de eerste scan-IN.</b>
         </p>
-
+<br>
         <div class="demo-tablewrap" style="margin-top:10px;">
           <table class="demo-table">
             <thead>
