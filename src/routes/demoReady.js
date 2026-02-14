@@ -86,8 +86,8 @@ router.get("/ready", (req, res) => {
 
 <body>
   <main class="wrap">
-   <div class="demo-title">CONFIGURATIE VOLTOOID</div>
    
+   <h1 class="demo-title">CONFIGURATIE VOLTOOID.</h1>
 
     <p>
       Je ScanTags en smartphones zijn nu gekoppeld.<br />
