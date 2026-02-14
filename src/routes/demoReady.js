@@ -87,11 +87,12 @@ router.get("/ready", (req, res) => {
 <body>
   <main class="wrap">
    <div class="demo-kicker">CONFIGURATIE VOLTOOID</div>
+   <h1 class="demo-title">STAP 4: REFERENTIETIJDEN.</h1>
 
     <p>
       Je ScanTags en smartphones zijn nu gekoppeld.<br />
       De demo-opstelling is nu klaar voor gebruik. <br><br>
-      Heb je problemen ondervonden? Contacteer dan href="mailto:support@punctoo.be">support@punctoo.be</a>
+      Heb je problemen ondervonden? Contacteer dan <a href="mailto:support@punctoo.be">support@punctoo.be</a>
     </p>
 
     <p>
