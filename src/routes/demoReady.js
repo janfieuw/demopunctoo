@@ -97,7 +97,9 @@ Start nu met het bekijken van je rapporten.
 
   
 
- 
+    <p class="demo-lead" style="margin-top:16px;">
+          <b>2. Klaar?</b> Rond nu jouw wizard af en klik op onderstaande knop.
+        </p>
 
   <div class="demo-actions" style="margin-top:14px;">
           <a class="demo-btn primary" href="/demo/demoportal.js">GA NAAR RAPPORTEN</a>
