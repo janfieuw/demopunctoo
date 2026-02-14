@@ -174,21 +174,7 @@ router.get("/reports", async (req, res) => {
         </div>
       </form>
 
-      <div class="demo-actions" style="margin-top:16px;">
-        <form method="POST" action="/reports/generate-last/7" style="margin:0;">
-          <button class="demo-btn secondary" type="submit">ALLE WERKNEMERS — 7 DAGEN</button>
-        </form>
-        <form method="POST" action="/reports/generate-last/14" style="margin:0;">
-          <button class="demo-btn secondary" type="submit">ALLE WERKNEMERS — 14 DAGEN</button>
-        </form>
-        <form method="POST" action="/reports/generate-last/21" style="margin:0;">
-          <button class="demo-btn secondary" type="submit">ALLE WERKNEMERS — 21 DAGEN</button>
-        </form>
-      </div>
-
-      <div class="demo-actions" style="margin-top:16px;">
-        <a class="demo-btn ghost" href="/tags">TAGS</a>
-      </div>
+     
       `,
       { leftWidthPx: 850, bodyClass: "page-reports" }
     )
