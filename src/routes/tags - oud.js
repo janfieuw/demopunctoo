@@ -135,23 +135,7 @@ router.get("/tags", async (req, res) => {
       "PUNCTOO — SCANTAG",
       `
         <div class="demo-kicker">JOUW SCANTAG.</div>
- <p class="demo-muted" style="margin-top:18px;">
-          <h1 class="demo-title">Stap 5: SMARTPHONE KOPPELEN.</h1>
-          <b>Gebruik onderstaande codes bij de eerste scan-IN.</b>
-        </p>
 
-        <div class="demo-tablewrap" style="margin-top:10px;">
-          <table class="demo-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Werknemer</th>
-                <th>Activatiecode</th>
-              </tr>
-            </thead>
-            <tbody>${empRows}</tbody>
-          </table>
-        </div>
         <div class="demo-actions" style="margin-top:12px;">
           <a class="demo-btn ghost" href="/wizard/reference">TERUG</a>
 
@@ -202,7 +186,23 @@ router.get("/tags", async (req, res) => {
           </div>
         </div>
 
-       
+        <p class="demo-muted" style="margin-top:18px;">
+          <h1 class="demo-title">Stap 5: SMARTPHONE KOPPELEN.</h1>
+          <b>Gebruik onderstaande codes bij de eerste scan-IN.</b>
+        </p>
+
+        <div class="demo-tablewrap" style="margin-top:10px;">
+          <table class="demo-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Werknemer</th>
+                <th>Activatiecode</th>
+              </tr>
+            </thead>
+            <tbody>${empRows}</tbody>
+          </table>
+        </div>
       `
     )
   );
