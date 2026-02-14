@@ -143,7 +143,7 @@ router.get("/tags", async (req, res) => {
 
           <a class="demo-btn secondary" href="/scantag/${tag.id}.pdf">DOWNLOAD JOUW SCANTAG</a>
         </div>
-          <b>Gebruik onderstaande codes bij de eerste scan-IN.</b>
+          <br><b>Gebruik onderstaande codes bij de eerste scan-IN.</b>
         </p>
 
         <div class="demo-tablewrap" style="margin-top:10px;">
