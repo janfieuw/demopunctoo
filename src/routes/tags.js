@@ -159,7 +159,7 @@ router.get("/tags", async (req, res) => {
           </table>
         </div>
         
-         <b>2. Klaar?</b>Rond nu jouw wizard af en klik op onderstaande knop.<br><br>
+         <b><br>2. Klaar?</b> Rond nu jouw wizard af en klik op onderstaande knop.<br><br>
           <a class="demo-btn primary" href="/wizard/complete">VOLTOOI DEMO</a>     
         </div>
 
