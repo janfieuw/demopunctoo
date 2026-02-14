@@ -86,24 +86,26 @@ router.get("/ready", (req, res) => {
 
 <body>
   <main class="wrap">
-   
-   <h1 class="demo-title">CONFIGURATIE VOLTOOID.</h1>
+    <h1>DEMO-CONFIGURATIE VOLTOOID</h1>
 
     <p>
-      Je ScanTags en smartphones zijn nu gekoppeld.<br />
-      De demo-opstelling is nu klaar voor gebruik. <br><br>
-Start nu met het bekijken van je rapporten. 
+      Je ScanTags en smartphones zijn gekoppeld.<br />
+      De demo-opstelling is nu klaar voor gebruik.
     </p>
 
-  
-  <div class="demo-actions" style="margin-top:14px;">
-          <a class="demo-btn primary" href="/demo/demoportal.js">GA NAAR RAPPORTEN</a>
-        </div>
+    <p>
+      Vanaf dit punt kan je enkel nog <span class="strong">rapporten bekijken</span>.
+      Aanpassingen aan werknemers, roosters of instellingen
+      zijn in deze demo niet mogelijk.
+    </p>
 
-          <div class="demo-actions" style="margin-top:12px;">
-          <a class="demo-btn primary" href="/wizard/complete">VOLTOOI DEMO</a>
-        </div>
-   
+    <a href="/demo/login" class="btn">
+      GA NAAR LOGIN & RAPPORTEN
+    </a>
+
+    <div class="muted">
+      Wil je instellingen wijzigen? Maak dan een nieuwe account aan.
+    </div>
   </main>
 </body>
 </html>`);
