@@ -95,19 +95,18 @@ router.get("/ready", (req, res) => {
 Start nu met het bekijken van je rapporten. 
     </p>
 
-    <p>
-      Vanaf dit punt kan je enkel nog <span class="strong">rapporten bekijken</span>.
-      Aanpassingen aan werknemers, roosters of instellingen
-      zijn in deze demo niet mogelijk.
-    </p>
+  
 
-    <a href="/demo/login" class="btn">
+    <div class="actions">
+     <a class="btn" href="/demo/login" class="btn">
       GA NAAR RAPPORTEN
     </a>
 
-    <div class="muted">
-      Wil je instellingen wijzigen? Maak dan een nieuwe account aan.
-    </div>
+   <div class="actions">
+      <a class="btn" href="demo/login">GA NAAR </a>
+        </div>
+
+   
   </main>
 </body>
 </html>`);
