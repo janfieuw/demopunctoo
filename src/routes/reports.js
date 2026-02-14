@@ -358,8 +358,8 @@ router.get("/reports/view/:id", async (req, res) => {
     layoutDemo(
       "RAPPORT",
       `
-      <div class="demo-kicker">PUNCTOO — RAPPORT</div>
-      <h1 class="demo-title">RAPPORT.</h1>
+      <div class="demo-kicker">RAPPORTEN GENEREREN</div>
+      <h1 class="demo-title">RAPPORT RESULTAAT.</h1>
 
       <p class="demo-muted">
         Onderneming: <b>${escapeHtml(company.name)}</b><br>
@@ -368,7 +368,7 @@ router.get("/reports/view/:id", async (req, res) => {
 
       <div class="demo-actions" style="margin-top:10px;">
         <a class="demo-btn ghost" href="/reports">TERUG</a>
-        <a class="demo-btn primary" href="/tags">TAGS</a>
+       
       </div>
 
       <div class="demo-tablewrap scroll-x" style="margin-top:12px;">
