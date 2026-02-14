@@ -104,7 +104,7 @@ router.get("/demo/login", async (req, res) => {
     layoutDemo(
       "PUNCTOO — LOGIN",
       `
-      <div class="demo-kicker">DEMO UITTESTEN IN 5 STAPPEN.</div>
+      <div class="demo-kicker">DEMO.</div>
       <h1 class="demo-title">LOGIN.</h1>
 
       <p class="demo-lead">
