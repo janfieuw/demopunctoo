@@ -186,30 +186,78 @@ function renderImageOnly({ ok, redirectUrl, redirectMs }) {
 </html>`;
 }
 
-
+// ✅ Nieuw: "Koppeling geslaagd" in dezelfde stijl als je scan-geslaagd scherm
+// - Gele achtergrond
+// - MyPunctoo logo bovenaan
+// - Tekst "KOPPELING GESLAAGD!"
+// - Grote witte cirkel met gele check
+// - Géén redirect
 function renderPairSuccess() {
   return `<!doctype html>
 <html lang="nl">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Koppelen geslaagd</title>
+  <title>Koppeling geslaagd</title>
   <style>
-    html, body { margin:0; padding:0; height:100%; background:#FDC500; }
-    body { font-family: ui-monospace, "JetBrains Mono", "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", monospace; color:#fff; }
-    .wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:22px; box-sizing:border-box; text-align:center; }
-    .card { width:min(520px, 94vw); }
-    .title { font-size:28px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; line-height:1.2; }
-    .sub { margin-top:14px; font-size:18px; line-height:1.45; }
-    .hint { margin-top:18px; font-size:14px; opacity:0.85; }
+    html, body {
+      margin:0;
+      padding:0;
+      height:100%;
+      background:#FDC500;
+      font-family: Arial, Helvetica, sans-serif;
+      color:#111;
+    }
+    .wrap {
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding:24px 18px;
+      box-sizing:border-box;
+    }
+    .logo {
+      width:320px;
+      max-width:86vw;
+      height:auto;
+      margin-bottom:10px;
+    }
+    .subtitle {
+      margin-top:6px;
+      font-size:20px;
+      letter-spacing:0.16em;
+      text-transform:uppercase;
+      font-weight:700;
+    }
+    .circle {
+      margin-top:22px;
+      width:180px;
+      height:180px;
+      border-radius:999px;
+      background:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .check {
+      width:110px;
+      height:110px;
+      display:block;
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="card">
-      <div class="title">KOPPELEN GESLAAGD</div>
-      <div class="sub">Je kan nu starten met scannen.</div>
-      <div class="hint">Je mag dit scherm sluiten.</div>
+    <img class="logo" src="/static/logo_punctoo_groot_opgeel.png" alt="MyPunctoo" />
+    <div class="subtitle">KOPPELING GESLAAGD!</div>
+
+    <div class="circle" aria-hidden="true">
+      <!-- gele check in witte cirkel (SVG zodat het overal scherp is) -->
+      <svg class="check" viewBox="0 0 24 24" fill="none">
+        <path d="M20 6L9 17l-5-5" stroke="#FDC500" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
     </div>
   </div>
 </body>
