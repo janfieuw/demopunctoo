@@ -10,9 +10,10 @@ const router = express.Router();
 const TZ = "Europe/Brussels";
 const COOLDOWN_MINUTES = 5;
 
-// 0 = geen redirect
-const AUTO_REDIRECT_MS_OK = 1200;
-const AUTO_REDIRECT_MS_NOTOK = 1500;
+// Scans gebeuren door opnieuw te scannen (camera/QR). We willen géén auto-redirect,
+// anders triggert de browser een tweede request (en dus cooldown/"scan foutief").
+const AUTO_REDIRECT_MS_OK = 0;
+const AUTO_REDIRECT_MS_NOTOK = 0;
 
 let scanEventsHasIgnoredCols = null;
 
@@ -305,7 +306,7 @@ router.get("/t/:tagId/:direction", async (req, res) => {
         return res.send(
           renderImageOnly({
             ok: false,
-            redirectUrl: `/t/${tag.tag_id}/${direction}`,
+            redirectUrl: null,
             redirectMs: AUTO_REDIRECT_MS_NOTOK,
           })
         );
@@ -326,7 +327,7 @@ router.get("/t/:tagId/:direction", async (req, res) => {
   return res.send(
     renderImageOnly({
       ok: true,
-      redirectUrl: `/t/${tag.tag_id}/${direction}`,
+      redirectUrl: null,
       redirectMs: AUTO_REDIRECT_MS_OK,
     })
   );
