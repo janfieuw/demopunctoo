@@ -66,6 +66,7 @@
   overflow: hidden;
   background-image: url("/static/demo-wall.png");
    background-repeat: repeat;
+   
 }
 
 .demo-right::before {
