@@ -5,62 +5,111 @@
 .demo-body {
   margin: 0;
   padding: 0;
-  font-family: "Poppins", sans-serif;
+  font-family: "JetBrains Mono", monospace;
   font-size: 13px;
 }
 
-/* Split screen — VAST: 760px links, rest rechts */
+/* Split screen — VAST: 760px links */
 .demo-shell {
-  display: flex;
+  display: grid;
+  grid-template-columns: 760px 1fr;
   min-height: 100vh;
 }
 
-/* LEFT */
+/* =========================
+   LEFT — GELE KOLOM
+   ========================= */
+
 .demo-left {
-  width: 760px;
   background: #fdc500;
-  color: #000;
-  position: relative;
-  overflow: hidden;
+  padding: 32px 28px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .demo-left-content {
-  padding: 46px 46px 120px 46px;
+  flex: 1;
 }
 
+/* ✅ Maximale benutting van de gele strook */
 .demo-left-inner {
-  max-width: 560px;
+  max-width: 100%;
+}
+
+.demo-left {
+  position: relative;
 }
 
 .demo-left-footer {
   position: absolute;
-  left: 46px;
-  bottom: 34px;
+  left: 28px;
+  bottom: 80px;
+  padding: 0;
 }
+
 
 .demo-logo {
-  width: 240px;
+  display: block;
+  width: 300px;
+  max-width: 100%;
   height: auto;
+  pointer-events: none;
 }
 
-/* RIGHT */
+/* =========================
+   RIGHT — MUUR + DAME
+   ========================= */
+
 .demo-right {
-  flex: 1;
-  background: #fff;
   position: relative;
   overflow: hidden;
-  background-image: url("/static/demo-wall.jpg");
-  background-repeat: repeat;
-  background-size: auto;
+  background-image: url("/static/demo-wall.png");
+   background-repeat: repeat;
+   
+}
+
+.demo-right::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.25);
+  pointer-events: none;
 }
 
 .demo-right-lady {
   position: absolute;
-  right: 70px;
-  bottom: 0;
-  height: 80vh;
-  max-height: 860px;
+  right: 100px;
+  bottom: 50px;
+
+  height: 92vh;
+  max-height: 980px;
   width: auto;
+
+  z-index: 3;
+  pointer-events: none;
+  user-select: none;
+
+  filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.18));
+}
+
+/* =========================
+   RESPONSIVE
+   - op smaller scherm verdwijnt rechterkant
+   ========================= */
+
+@media (max-width: 980px) {
+  .demo-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .demo-right {
+    display: none;
+  }
+
+  .demo-left {
+    min-height: 100vh;
+  }
 }
 
 /* =========================
@@ -69,104 +118,76 @@
 
 .demo-kicker {
   font-size: 45px;
-  letter-spacing: 0.04em; /* was 0.08em (JetBrains), Poppins = mooier compacter */
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  opacity: 0.75;
+  opacity: 1;
   margin-bottom: 12px;
-  font-weight: 800;
+  font-weight: 700;
+  color: #ffffff;
 }
 
 .demo-title {
-  font-size: 40px;
-  letter-spacing: 0.04em; /* was breder */
+  font-size: 45px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  margin: 0 0 18px 0;
-  font-weight: 800;
+  opacity: 1;
+  margin-bottom: 12px;
+  font-weight: 700;
+  color: #140d01;
 }
 
 .demo-lead {
-  font-size: 12px;
-  line-height: 1.55;
-  margin: 0 0 18px 0;
-  max-width: 520px;
+  max-width: 640px;
 }
 
 .demo-muted {
-  font-size: 12px;
   opacity: 0.85;
 }
 
 /* =========================
-   FORMS
+   FORM LAYOUT
    ========================= */
 
 .demo-form {
-  margin-top: 18px;
-  max-width: 560px;
-}
-
-.demo-field {
   display: grid;
-  grid-template-columns: 120px 1fr;
+  grid-template-columns: 340px 1fr;
+  column-gap: 16px;
+  row-gap: 12px;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
+}
+.demo-formtwee {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  column-gap: 16px;
+  row-gap: 12px;
+  align-items: center;
+}
+.demo-label {
+  margin: 0;
+  justify-self: end;
 }
 
-.demo-field label {
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.demo-field input,
-.demo-field select {
+.demo-input {
   width: 100%;
-  height: 36px;
-  border: 0;
-  border-radius: 6px;
-  padding: 0 12px;
-  outline: none;
-  font-family: "Poppins", sans-serif;
-  font-size: 13px;
-  background: #fff;
+  max-width: 760px; /* forms blijven mooi compact */
   box-sizing: border-box;
+  height: 36px;
+  border-radius: 6px;
+  border: none;
+  padding: 0 10px;
+  font-family: "JetBrains Mono", monospace;
 }
 
-/* =========================
-   BUTTONS
-   ========================= */
-
-.demo-actions {
-  margin-top: 10px;
+.demo-spacer {
+  display: none;
 }
 
-.demo-btn {
-  display: inline-block;
-  background: #000;
-  color: #fff;
-  border: 0;
-  border-radius: 10px;
-  padding: 12px 18px;
-  font-family: "Poppins", sans-serif;
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  cursor: pointer;
-  text-decoration: none;
-}
-
-.demo-btn.secondary {
-  background: rgba(0, 0, 0, 0.15);
-  color: #000;
-}
-
-.demo-btn:hover {
-  opacity: 0.92;
-}
-
-.demo-btn:active {
-  transform: translateY(1px);
+/* alles wat breed is over beide kolommen */
+.demo-form .demo-tablewrap,
+.demo-form .demo-actions,
+.demo-form hr,
+.demo-form .demo-row {
+  grid-column: 1 / -1;
 }
 
 /* =========================
@@ -174,63 +195,163 @@
    ========================= */
 
 .demo-tablewrap {
-  margin-top: 10px;
-  max-width: 620px;
+  overflow-x: hidden;
 }
 
 .demo-tablewrap.scroll-x {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .demo-table {
   width: 100%;
+  max-width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  margin-top: 8px;
+  font-size: 13px;
+  table-layout: auto;
 }
 
 .demo-table th,
 .demo-table td {
+  padding: 10px 10px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.15);
-  padding: 8px 10px;
   text-align: left;
-  vertical-align: top;
+  white-space: normal;
 }
 
-.demo-table th {
-  font-weight: 800;
+/* Form in tabelcel mag wrappen (voor wizard reference) */
+.demo-table form {
+  flex-wrap: wrap;
 }
 
-.demo-table code {
-  font-family: "Poppins", sans-serif;
-  font-size: 12px;
+/* selects */
+.demo-select {
+  height: 36px;
+  min-width: 140px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  padding: 0 10px;
+  font-family: "JetBrains Mono", monospace;
+  box-sizing: border-box;
 }
 
-/* =========================
-   ROWS / SMALL UI
-   ========================= */
-
+/* rows */
 .demo-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin: 10px 0;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.demo-pill {
-  display: inline-block;
+/* alerts */
+.demo-alert {
+  margin: 10px 0 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.10);
+}
+
+/* =========================
+   BUTTON SYSTEM
+   ========================= */
+
+.demo-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+  align-items: center;
+}
+
+.demo-btn {
+  appearance: none;
+  border: none;
+  border-radius: 8px;
+
+  padding: 10px 18px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  text-decoration: none;
+  line-height: 1;
+
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.05s ease;
+}
+
+.demo-btn:active {
+  transform: translateY(1px);
+}
+
+.demo-btn.primary {
+  background: #000;
+  color: #fff;
+}
+
+.demo-btn.primary:hover {
+  background: #1a1a1a;
+}
+
+.demo-btn.secondary {
+  background: #d4a900;
+  color: #000;
+}
+
+.demo-btn.secondary:hover {
+  background: #c29a00;
+}
+
+.demo-btn.ghost {
+  background: transparent;
+  color: #000;
+  border: 2px solid #000;
+}
+
+.demo-btn.ghost:hover {
   background: rgba(0, 0, 0, 0.08);
-  padding: 6px 10px;
-  border-radius: 999px;
+}
+
+.demo-btn:disabled,
+.demo-btn[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: none;
+}
+
+.demo-btn.is-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* compact knopje voor copy */
+.demo-btn.compact {
+  padding: 8px 12px;
   font-size: 12px;
 }
 
 /* =========================
-   ERRORS
+   LINK (mini-CTA)
    ========================= */
 
-.demo-error {
-  background: rgba(0, 0, 0, 0.12);
-  padding: 10px 12px;
-  border-radius: 10px;
+.demo-link {
+  color: #000;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  background: rgba(0,0,0,0.05);
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.demo-link:hover {
+  opacity: 0.85;
 }
