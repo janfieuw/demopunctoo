@@ -1,10 +1,15 @@
 /* =========================
-   GLOBAL RESET
+   GLOBAL BASE STYLES
    ========================= */
 
-*,
-*::before,
-*::after {
+:root {
+  --punctoo-yellow: #FDC500;
+  --punctoo-black: #000000;
+  --punctoo-white: #ffffff;
+  --punctoo-grey: #f4f4f4;
+}
+
+* {
   box-sizing: border-box;
 }
 
@@ -12,81 +17,35 @@ html,
 body {
   margin: 0;
   padding: 0;
-
-  font-family: "JetBrains Mono", monospace;
-  font-weight: 400;
-  font-size: 14px;
-  line-height: 1.45;
-
-  color: #111;
-  background: #f5f6f7;
+  font-family: "Poppins", sans-serif;
+  background: var(--punctoo-yellow);
+  color: var(--punctoo-white);
+  -webkit-font-smoothing: antialiased;
 }
 
 /* =========================
-   TYPOGRAFIE
+   TYPOGRAPHY
    ========================= */
 
-h1, h2, h3, h4, h5, h6 {
-  margin: 0 0 0.6em 0;
-  font-weight: 400;
-  letter-spacing: -0.01em;
+h1 {
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  margin: 0 0 16px 0;
+}
+
+h2, h3 {
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 p {
-  margin: 0 0 0.8em 0;
-}
-
-small {
-  font-size: 12px;
-}
-
-/* =========================
-   FORM ELEMENTEN
-   ========================= */
-
-button,
-input,
-select,
-textarea {
-  font-family: inherit;
   font-weight: 400;
-  font-size: 14px;
-  line-height: 1.4;
+  line-height: 1.6;
+  margin: 10px 0;
 }
 
-input,
-select,
-textarea {
-  padding: 8px 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  background: #fff;
-  color: #111;
-}
-
-input:focus,
-select:focus,
-textarea:focus {
-  outline: none;
-  border-color: #111;
-}
-
-/* =========================
-   BUTTONS (basis)
-   ========================= */
-
-button {
-  cursor: pointer;
-  border-radius: 6px;
-  border: 1px solid #111;
-  background: #111;
-  color: #fff;
-  padding: 8px 14px;
-}
-
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+b, strong {
+  font-weight: 700;
 }
 
 /* =========================
@@ -94,46 +53,97 @@ button:disabled {
    ========================= */
 
 a {
-  color: #111;
-  text-decoration: none;
-}
-
-a:hover {
+  color: var(--punctoo-white);
   text-decoration: underline;
 }
 
+a:hover {
+  opacity: 0.9;
+}
+
 /* =========================
-   TABLES (basis)
+   BUTTON BASE
    ========================= */
 
-table {
-  border-collapse: collapse;
+.demo-btn {
+  display: inline-block;
+  padding: 14px 28px;
+  background: var(--punctoo-black);
+  color: var(--punctoo-white);
+  text-decoration: none;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.08s ease, opacity 0.12s ease;
+}
+
+.demo-btn:hover {
+  opacity: 0.92;
+}
+
+.demo-btn:active {
+  transform: translateY(1px);
+}
+
+/* =========================
+   LAYOUT
+   ========================= */
+
+.demo-body {
+  min-height: 100vh;
+}
+
+.demo-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.demo-left {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+}
+
+.demo-content {
   width: 100%;
-  font-size: 13px;
+  max-width: 520px;
 }
 
-th,
-td {
-  padding: 6px 8px;
-  text-align: left;
+.demo-right {
+  flex: 1;
+  background: var(--punctoo-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-th {
-  font-weight: 400;
-  border-bottom: 1px solid #ccc;
-}
-
-td {
-  border-bottom: 1px solid #eee;
+/* Placeholder visual (kan je later vervangen door dame/achtergrond) */
+.demo-visual {
+  width: 80%;
+  height: 80%;
+  background: url('/images/demo-visual.jpg') center/cover no-repeat;
 }
 
 /* =========================
-   UTILS
+   FORM ELEMENTS
    ========================= */
 
-code {
-  font-family: "JetBrains Mono", monospace;
-  background: rgba(0,0,0,0.05);
-  padding: 2px 6px;
-  border-radius: 4px;
+input, select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  margin-top: 6px;
+  margin-bottom: 14px;
+  font-family: "Poppins", sans-serif;
+}
+
+label {
+  font-size: 14px;
+  font-weight: 600;
 }
