@@ -41,7 +41,7 @@ function layoutDemo(title, leftHtml, options = {}) {
   <!-- Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
 
   <!-- styles via /static (app.js mount) -->
   <link rel="stylesheet" href="/static/demo.css" />
