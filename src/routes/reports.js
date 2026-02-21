@@ -366,10 +366,11 @@ router.get("/reports/view/:id", async (req, res) => {
         Periode: <b>${escapeHtml(report.filter_from)}</b> t.e.m. <b>${escapeHtml(report.filter_to)}</b>
       </p>
 
-      <div class="demo-actions" style="margin-top:10px;">
-        <a class="demo-btn ghost" href="/reports">TERUG</a>
-       
-      </div>
+    <div class="demo-actions" style="margin-top:14px;">
+  <a href="/reports" class="demo-btn primary">
+    TERUG
+  </a>
+</div>
 
       <div class="demo-tablewrap scroll-x" style="margin-top:12px;">
         <table class="demo-table">

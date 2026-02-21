@@ -485,7 +485,7 @@ router.get("/wizard/reference/rooster", async (req, res) => {
           </div>
 
           <div class="demo-actions" style="margin-top:18px;">
-            <a class="demo-btn ghost" href="/wizard/reference">ANNULEREN</a>
+            <a class="demo-btn primary" href="/wizard/reference">ANNULEREN</a>
             <button class="demo-btn primary" type="submit">OPSLAAN EN TERUG NAAR STAP 4</button>
           </div>
         </form>
@@ -637,7 +637,7 @@ router.get("/wizard/reference/kalender", async (req, res) => {
           </div>
 
           <div class="demo-actions" style="margin-top:18px;">
-            <a class="demo-btn ghost" href="/wizard/reference">ANNULEREN</a>
+           <a class="demo-btn primary" href="/wizard/reference">ANNULEREN</a>
             <button class="demo-btn primary" type="submit">OPSLAAN EN TERUG NAAR STAP 4</button>
           </div>
         </form>
