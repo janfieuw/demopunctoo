@@ -364,7 +364,7 @@ router.get("/wizard/reference", async (req, res) => {
         <h1 class="demo-title">STAP 4: REFERENTIEDUUR AANVULLEN.</h1>
 
         <p class="demo-lead">
-        Vul per werknemer de referentieduur in.<br>  
+        Vul per werknemer de dagelijkse referentieduur in.<br>  
         Dit is de verwachte duur na een scan-IN, inclusief eventuele pauzes.<br>
           De referentieduur kan elke weekdag gelijk zijn of verschillen per kalenderdag.<br>
           Kies daarom per werknemer <b>Rooster</b> of <b>Kalender</b> en klik op <b>Vul aan</b>.
