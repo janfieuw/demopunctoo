@@ -1,6 +1,7 @@
 // src/routes/tags.js
 const express = require("express");
 const QRCode = require("qrcode");
+const PDFDocument = require("pdfkit");
 const { get, all } = require("../db");
 const { layoutDemo, escapeHtml } = require("../ui/layout");
 
@@ -65,7 +66,135 @@ function getBaseUrl(req) {
 }
 
 /* =========================
-   Route
+   PDF helper
+   ========================= */
+function safeFileName(s) {
+  return String(s || "codes")
+    .toLowerCase()
+    .replace(/[^a-z0-9\- _]/gi, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .slice(0, 60);
+}
+
+function drawRow(doc, x, y, cols, widths, opts = {}) {
+  const fontSize = opts.fontSize || 11;
+  doc.fontSize(fontSize).fillColor("#000000");
+
+  let cx = x;
+  for (let i = 0; i < cols.length; i++) {
+    doc.text(String(cols[i] ?? ""), cx, y, {
+      width: widths[i],
+      align: i === 0 ? "right" : "left",
+    });
+    cx += widths[i];
+  }
+}
+
+function drawLine(doc, x, y, w) {
+  doc
+    .save()
+    .strokeColor("#000000")
+    .lineWidth(0.5)
+    .moveTo(x, y)
+    .lineTo(x + w, y)
+    .stroke()
+    .restore();
+}
+
+/* =========================
+   Route: PDF met activatiecodes
+   ========================= */
+router.get("/tags/codes.pdf", async (req, res) => {
+  const company = await getCompany(req);
+  if (!company) return res.redirect("/demo/signup");
+
+  const employees = await getEmployees(company.id);
+
+  // Response headers
+  const filename = `punctoo-codes-${safeFileName(company.name)}.pdf`;
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+
+  // A4 PDF
+  const doc = new PDFDocument({
+    size: "A4",
+    margins: { top: 54, right: 54, bottom: 54, left: 54 },
+  });
+
+  // stream to client
+  doc.pipe(res);
+
+  // Witte achtergrond (default), zwarte tekst
+  doc.fillColor("#000000");
+
+  // Header
+  doc.font("Helvetica-Bold").fontSize(18).text("Activatiecodes", { align: "left" });
+  doc.moveDown(0.3);
+
+  doc
+    .font("Helvetica")
+    .fontSize(11)
+    .text(`Bedrijf: ${company.name || "-"}`)
+    .text(`Datum: ${new Date().toLocaleDateString("nl-BE")}`);
+
+  doc.moveDown(1);
+
+  // Table layout
+  const pageW = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+  const x = doc.page.margins.left;
+  let y = doc.y;
+
+  const widths = [40, Math.floor(pageW * 0.55), Math.floor(pageW * 0.45) - 40];
+  // widths: [#, werknemer, activatiecode] (som ≈ pageW)
+
+  // Table header
+  doc.font("Helvetica-Bold");
+  drawRow(doc, x, y, ["#", "Werknemer", "Activatiecode"], widths, { fontSize: 11 });
+  y += 18;
+  drawLine(doc, x, y, pageW);
+  y += 10;
+
+  // Rows
+  doc.font("Helvetica");
+  if (employees.length === 0) {
+    doc.text("Geen werknemers gevonden.", x, y);
+  } else {
+    for (let i = 0; i < employees.length; i++) {
+      const e = employees[i];
+      const label = employeeLabel(e);
+      const code = String(e.scan_code || "");
+
+      // page break
+      if (y > doc.page.height - doc.page.margins.bottom - 40) {
+        doc.addPage();
+        y = doc.page.margins.top;
+
+        // re-header on new page
+        doc.font("Helvetica-Bold");
+        drawRow(doc, x, y, ["#", "Werknemer", "Activatiecode"], widths, { fontSize: 11 });
+        y += 18;
+        drawLine(doc, x, y, pageW);
+        y += 10;
+        doc.font("Helvetica");
+      }
+
+      drawRow(doc, x, y, [String(i + 1), label, code], widths, { fontSize: 11 });
+      y += 18;
+    }
+  }
+
+  doc.moveDown(2);
+  doc
+    .font("Helvetica")
+    .fontSize(10)
+    .text("Tip: Gebruik deze activatiecodes bij de eerste scan-IN (smartphone koppelen).");
+
+  doc.end();
+});
+
+/* =========================
+   Route: /tags (pagina)
    ========================= */
 router.get("/tags", async (req, res) => {
   const company = await getCompany(req);
@@ -94,70 +223,4 @@ router.get("/tags", async (req, res) => {
             (e, idx) => `
               <tr>
                 <td>${idx + 1}</td>
-                <td><b>${escapeHtml(employeeLabel(e))}</b></td>
-                <td><code>${escapeHtml(String(e.scan_code || ""))}</code></td>
-              </tr>
-            `
-          )
-          .join("");
-
-  return res.send(
-    layoutDemo(
-      "PUNCTOO — SCANTAG",
-      `
-        <div class="demo-kicker">DEMO UITTESTEN IN 5 STAPPEN.</div>
-        <h1 class="demo-title">STAP 5: SMARTPHONE KOPPELEN.</h1>
-
-        <p class="demo-lead">
-          <b>1. Download jouw persoonlijke ScanTag.</b><br>
-          Druk jouw ScanTag af om later te kunnen gebruiken.<br>
-          Gebruik onderstaande codes bij de eerste scan-IN.
-        </p>
-
-        <div class="demo-actions" style="margin-top:14px;">
-          <a class="demo-btn primary" href="/scantag/${tag.id}.pdf">DOWNLOAD JOUW SCANTAG</a>
-        </div>
-
-        <p class="demo-muted" style="margin-top:16px;">
-          <b>Gebruik onderstaande codes bij de eerste scan-IN.</b>
-        </p>
-
-        <div class="demo-tablewrap scroll-x" style="margin-top:10px;">
-          <table class="demo-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Werknemer</th>
-                <th>Activatiecode</th>
-              </tr>
-            </thead>
-            <tbody>${empRows}</tbody>
-          </table>
-        </div>
-
-        <p class="demo-lead" style="margin-top:16px;">
-          <b>2. Klaar?</b> Rond nu jouw wizard af en klik op onderstaande knop.
-        </p>
-
-        <div class="demo-actions" style="margin-top:12px;">
-          <a class="demo-btn primary" href="/wizard/complete">VOLTOOI DEMO</a>
-        </div>
-
-        <!-- (optioneel) QR's tonen, als je wil debuggen:
-        <div style="margin-top:22px; display:flex; gap:16px; flex-wrap:wrap;">
-          <div>
-            <div class="demo-muted"><b>IN</b></div>
-            <img src="${inQrDataUrl}" alt="QR IN" style="max-width:220px; height:auto;" />
-          </div>
-          <div>
-            <div class="demo-muted"><b>OUT</b></div>
-            <img src="${outQrDataUrl}" alt="QR OUT" style="max-width:220px; height:auto;" />
-          </div>
-        </div>
-        -->
-      `
-    )
-  );
-});
-
-module.exports = router;
+                <td><b>${escapeHtml(empl
