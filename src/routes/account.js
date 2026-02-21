@@ -121,10 +121,10 @@ function renderLogin({ error = "", email = "" } = {}) {
         <label class="demo-label">Paswoord</label>
         <input class="demo-input" name="password" type="password" required />
 
-        <div class="demo-actions" style="display:flex; gap:10px;">
-          <button class="demo-btn primary" type="submit">LOGIN</button>
-          <a class="demo-btn ghost" href="/demo/logout">UITLOGGEN</a>
-        </div>
+       <div class="demo-actions" style="margin-top:14px;">
+  <button type="submit" class="demo-btn primary">LOGIN</button>
+  <a href="/demo/logout" class="demo-btn primary">UITLOGGEN</a>
+</div>
       </form>
     `,
     { width: 850 }
